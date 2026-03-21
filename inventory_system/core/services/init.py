@@ -1,0 +1,1 @@
+# Core service classes (e.g., InventoryService).

@@ -1,0 +1,1 @@
+# Marks the inventory_system folder as a Python package.
