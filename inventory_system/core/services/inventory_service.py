@@ -1,92 +1,87 @@
+
 from inventory_system.core.patterns.item_factory import ItemFactory
 from inventory_system.core.patterns.sorting_strategy import SortByName
 
 class InventoryService:
-    """
-    Core business logic for managing inventory items.
-    Handles item creation, updates, sorting, searching, and passing data to/from the repository.
-    """
-
     def __init__(self, repository, sorting_strategy=None):
-        """
-        repository: an object that implements insert(), get_all(), update(), delete()
-        sorting_strategy: any class that inherits from SortStrategy
-        """
-        self.repository = repository
-        self.sorting_strategy = sorting_strategy or SortByName()
+        self.repo = repository
+        self.sorter = sorting_strategy or SortByName()
 
-    # ----------------------------------------------------------------------
-    # CREATE
-    # ----------------------------------------------------------------------
-    def add_item(self, category: str, name: str, quantity: int, **extra):
-        """
-        Create an item (general or perishable) using the Factory Pattern,
-        then insert into the repository.
-        """
+    # ADD ITEM
+    def add_item(self, category, name, quantity, **extra):
         item = ItemFactory.create_item(
             category=category,
             name=name,
             quantity=quantity,
             **extra
         )
-        
-        self.repository.insert(item)
+        self.repo.insert(item)
         return item
 
-    # ----------------------------------------------------------------------
-    # READ
-    # ----------------------------------------------------------------------
+    # LIST ITEMS
     def list_items(self):
-        """
-        Fetch all items from the repository and sort them.
-        """
-        items = self.repository.get_all()
-        return self.sorting_strategy.sort(items)
+        items = self.repo.get_all()
+        return self.sorter.sort(items)
 
-    def search_items(self, keyword: str):
-        """
-        Simple search by matching text in item names (case insensitive).
-        """
-        items = self.repository.get_all()
-        keyword_lower = keyword.lower()
+    # SEARCH
+    def search_items(self, keyword):
+        keyword = keyword.lower()
+        return [i for i in self.repo.get_all() if keyword in i.name.lower()]
 
-        return [item for item in items if keyword_lower in item.name.lower()]
-
-    # ----------------------------------------------------------------------
-    # UPDATE
-    # ----------------------------------------------------------------------
-    def update_quantity(self, item_name: str, amount: int):
-        """
-        Increase or decrease quantity for a given item.
-        """
-        item = self.repository.get_by_name(item_name)
+    # CHECK OUT
+    def check_out_item(self, name, user, due_date):
+        item = self.repo.get_by_name(name)
         if not item:
-            raise ValueError(f"Item '{item_name}' not found.")
+            raise ValueError("Item not found.")
 
-        item.update_quantity(amount)
-        self.repository.update(item)
-
+        item.check_out(user, due_date)
+        self.repo.update(item)
         return item
 
-    # ----------------------------------------------------------------------
-    # DELETE
-    # ----------------------------------------------------------------------
-    def delete_item(self, item_name: str):
-        """
-        Remove an item entirely from inventory.
-        """
-        item = self.repository.get_by_name(item_name)
+    # CHECK IN
+    def check_in_item(self, name):
+        item = self.repo.get_by_name(name)
         if not item:
-            raise ValueError(f"Item '{item_name}' not found.")
+            raise ValueError("Item not found.")
 
-        self.repository.delete(item_name)
-        return True
+        item.check_in()
+        self.repo.update(item)
+        return item
 
-    # ----------------------------------------------------------------------
-    # STRATEGY SWAP
-    # ----------------------------------------------------------------------
+    # MARK IN REPAIR
+    def mark_in_repair(self, name):
+        item = self.repo.get_by_name(name)
+        item.status = "in_repair"
+        self.repo.update(item)
+        return item
+
+    # MARK LOST
+    def mark_lost(self, name):
+        item = self.repo.get_by_name(name)
+        item.status = "lost"
+        self.repo.update(item)
+        return item
+
+    # FILTER BY DEPARTMENT
+    def filter_by_department(self, department):
+        return [i for i in self.repo.get_all() if i.department == department]
+
+    # FILTER BY LOCATION
+    def filter_by_location(self, location):
+        return [i for i in self.repo.get_all() if i.location == location]
+
+    # GET OVERDUE ITEMS
+    def get_overdue_items(self):
+        from datetime import datetime
+        overdue = []
+
+        for item in self.repo.get_all():
+            if item.status == "checked_out" and item.due_date:
+                if item.due_date < datetime.now().date():
+                    overdue.append(item)
+
+        return overdue
+
+    # CHANGE SORT STRATEGY
     def set_sort_strategy(self, strategy):
-        """
-        Change sorting strategy at runtime.
-        """
-        self.sorting_strategy = strategy
+        self.sorter = strategy

@@ -3,7 +3,6 @@ from datetime import datetime
 class Item:
     """
     Base class representing general Alfred State equipment.
-    Tracks location, department, checkout info, and status.
     """
 
     def __init__(
@@ -23,12 +22,11 @@ class Item:
         self.name = name
         self.quantity = quantity
         self.category = category
-        
-        # Alfred State–specific fields
-        self.department = department          # e.g., "IT", "Engineering", "Athletics"
-        self.location = location              # e.g., "SET 445"
-        self.status = status                  # available / checked_out / in_repair / lost
-        self.checked_out_by = checked_out_by  # Alfred State student or staff name
+        self.department = department
+        self.location = location
+        self.status = status
+        self.checked_out_by = checked_out_by
+
         self.due_date = (
             datetime.strptime(due_date, "%Y-%m-%d").date()
             if due_date else None
@@ -40,9 +38,6 @@ class Item:
         self.quantity += amount
 
     def check_out(self, user: str, due_date: str):
-        if self.status != "available":
-            raise ValueError("Item is not available for checkout.")
-
         self.status = "checked_out"
         self.checked_out_by = user
         self.due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
@@ -52,26 +47,22 @@ class Item:
         self.checked_out_by = None
         self.due_date = None
 
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "quantity": self.quantity,
-            "category": self.category,
-            "department": self.department,
-            "location": self.location,
-            "status": self.status,
-            "checked_out_by": self.checked_out_by,
-            "due_date": str(self.due_date) if self.due_date else None
-        }
-
     def __str__(self):
-        return (
-            f"{self.name} (Qty: {self.quantity}, Status: {self.status}, "
-            f"Location: {self.location}, Department: {self.department})"
-        )
+        parts = [
+            f"{self.name}",
+            f"Qty: {self.quantity}",
+            f"Status: {self.status}",
+            f"Location: {self.location}",
+            f"Department: {self.department}"
+        ]
+
+        if self.checked_out_by:
+            parts.append(f"Checked out by: {self.checked_out_by}")
+
+        if self.due_date:
+            parts.append(f"Due: {self.due_date}")
+
+        return ", ".join(parts)
 
     def __repr__(self):
-        return (
-            f"Item(name={self.name!r}, quantity={self.quantity!r}, category={self.category!r}, "
-            f"department={self.department!r}, location={self.location!r}, status={self.status!r})"
-        )
+        return f"Item({self.name}, Qty={self.quantity}, Status={self.status})"
