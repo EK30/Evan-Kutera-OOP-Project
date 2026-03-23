@@ -18,7 +18,7 @@ def print_menu():
     print("9. Filter by Location")
     print("10. View Overdue Equipment")
     print("11. Change Sorting Method")
-    print("0. Exit")
+    print("12. Exit")
     print("==========================================")
 
 
@@ -119,7 +119,7 @@ def main():
         elif choice == "11":
             sorting_menu(service)
 
-        elif choice == "0":
+        elif choice == "12":
             print("Goodbye!")
             break
 
