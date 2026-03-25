@@ -11,6 +11,7 @@ class SQLiteRepository(Repository):
         self._connect()
 
     def _connect(self):
+        # row_factory lets us access columns by name instead of index.
         self.conn = sqlite3.connect(self.db_path)
         self.conn.row_factory = sqlite3.Row
 
@@ -42,6 +43,7 @@ class SQLiteRepository(Repository):
         cursor = self.conn.execute("SELECT * FROM items")
         items = []
 
+        # Rebuild each database row as the correct Python object type.
         for row in cursor:
             if row["category"] == "perishable":
                 items.append(
@@ -80,6 +82,7 @@ class SQLiteRepository(Repository):
         if not row:
             return None
 
+        # Match the object type to the saved category before returning it.
         if row["category"] == "perishable":
             return PerishableItem(
                 name=row["name"],
@@ -113,6 +116,7 @@ class SQLiteRepository(Repository):
             WHERE name=?
         """
 
+        # Save the current in-memory state of the item back to the database.
         self.conn.execute(query, (
             item.quantity,
             item.category,

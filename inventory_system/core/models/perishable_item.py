@@ -29,11 +29,13 @@ class PerishableItem(Item):
         )
 
         try:
+            # Perishable items must have a valid expiration date for tracking.
             self.expiration_date = datetime.strptime(expiration_date, "%Y-%m-%d").date()
         except ValueError:
             raise ValueError("Expiration date must be YYYY-MM-DD.")
 
     def is_expired(self) -> bool:
+        # Returns True when today's date is past the expiration date.
         today = datetime.now().date()
         return today > self.expiration_date
 

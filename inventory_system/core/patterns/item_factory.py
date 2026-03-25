@@ -10,6 +10,7 @@ class ItemFactory:
 
     @staticmethod
     def create_item(category: str, name: str, quantity: int, **extra):
+        # Normalize input so the UI can pass categories in a flexible way.
         category = category.lower().strip()
 
         # Perishable item

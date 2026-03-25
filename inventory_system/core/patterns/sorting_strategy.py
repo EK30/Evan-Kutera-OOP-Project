@@ -36,13 +36,13 @@ class SortByExpiration(SortStrategy):
     """
 
     def sort(self, items):
-        # Filter items that have expiration dates
+        # Only perishable items can be sorted by expiration date.
         perishable_items = [i for i in items if hasattr(i, "expiration_date")]
 
-        # Non-perishable items go last
+        # Non-perishable items stay in the list, but appear after perishables.
         non_perishables = [i for i in items if not hasattr(i, "expiration_date")]
 
-        # Sort perishables by soonest expiration date
+        # Soonest-to-expire items are shown first.
         perishable_items_sorted = sorted(
             perishable_items,
             key=lambda item: item.expiration_date

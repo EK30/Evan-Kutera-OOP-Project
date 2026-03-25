@@ -23,6 +23,7 @@ def print_menu():
 
 
 def sorting_menu(service):
+    # Lets the user switch sorting behavior at runtime.
     print("\nSorting Options:")
     print("1. By Name")
     print("2. By Quantity")
@@ -40,6 +41,7 @@ def sorting_menu(service):
 
 
 def main():
+    # Create the database connection and service once when the program starts.
     repo = SQLiteRepository("inventory.db")
     service = InventoryService(repo)
 
@@ -49,6 +51,7 @@ def main():
         print_menu()
         choice = input("Enter choice: ")
 
+        # Each menu option maps to one inventory action.
         if choice == "1":
             category = input("Category (general/perishable): ")
             name = input("Item name: ")

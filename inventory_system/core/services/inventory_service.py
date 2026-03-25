@@ -4,6 +4,7 @@ from inventory_system.core.patterns.sorting_strategy import SortByName
 
 class InventoryService:
     def __init__(self, repository, sorting_strategy=None):
+        # The service coordinates business rules between the UI and storage layer.
         self.repo = repository
         self.sorter = sorting_strategy or SortByName()
 
@@ -75,6 +76,7 @@ class InventoryService:
         from datetime import datetime
         overdue = []
 
+        # Only checked-out items with due dates can be overdue.
         for item in self.repo.get_all():
             if item.status == "checked_out" and item.due_date:
                 if item.due_date < datetime.now().date():

@@ -50,6 +50,32 @@ class TestItem(unittest.TestCase):
         self.assertIsNone(item.checked_out_by)
         self.assertIsNone(item.due_date)
 
+    def test_to_dict_returns_expected_fields(self):
+        item = Item(
+            name="Laptop",
+            quantity=2,
+            category="general",
+            department="IT",
+            location="SET 101",
+            status="checked_out",
+            checked_out_by="Evan",
+            due_date="2026-04-20",
+        )
+
+        self.assertEqual(
+            item.to_dict(),
+            {
+                "name": "Laptop",
+                "quantity": 2,
+                "category": "general",
+                "department": "IT",
+                "location": "SET 101",
+                "status": "checked_out",
+                "checked_out_by": "Evan",
+                "due_date": "2026-04-20",
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

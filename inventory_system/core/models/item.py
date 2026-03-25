@@ -27,6 +27,7 @@ class Item:
         self.status = status
         self.checked_out_by = checked_out_by
 
+        # Store due dates as date objects so overdue checks are easier later.
         self.due_date = (
             datetime.strptime(due_date, "%Y-%m-%d").date()
             if due_date else None
@@ -38,14 +39,29 @@ class Item:
         self.quantity += amount
 
     def check_out(self, user: str, due_date: str):
+        # Checking out an item updates both its status and borrower details.
         self.status = "checked_out"
         self.checked_out_by = user
         self.due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
 
     def check_in(self):
+        # Returning an item clears any active checkout information.
         self.status = "available"
         self.checked_out_by = None
         self.due_date = None
+
+    def to_dict(self):
+        # Convert the item to a dictionary for storage, APIs, or future exports.
+        return {
+            "name": self.name,
+            "quantity": self.quantity,
+            "category": self.category,
+            "department": self.department,
+            "location": self.location,
+            "status": self.status,
+            "checked_out_by": self.checked_out_by,
+            "due_date": str(self.due_date) if self.due_date else None,
+        }
 
     def __str__(self):
         parts = [
