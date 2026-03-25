@@ -3,6 +3,7 @@ from inventory_system.core.services.inventory_service import InventoryService
 from inventory_system.core.patterns.sorting_strategy import (
     SortByName, SortByQuantity, SortByExpiration
 )
+from inventory_system.logs.init import setup_logging
 
 
 def print_menu():
@@ -42,8 +43,10 @@ def sorting_menu(service):
 
 def main():
     # Create the database connection and service once when the program starts.
+    logger = setup_logging()
     repo = SQLiteRepository("inventory.db")
     service = InventoryService(repo)
+    logger.info("Inventory system started")
 
     print("Welcome to Alfred State's Equipment Tracking System!")
 
@@ -84,6 +87,7 @@ def main():
                 item = service.check_out_item(name, user, due)
                 print(f"Checked out: {item}")
             except Exception as e:
+                logger.exception("Error while checking out item '%s'", name)
                 print(e)
 
         elif choice == "5":
@@ -92,17 +96,26 @@ def main():
                 item = service.check_in_item(name)
                 print(f"Returned: {item}")
             except Exception as e:
+                logger.exception("Error while checking in item '%s'", name)
                 print(e)
 
         elif choice == "6":
             name = input("Item name: ")
-            service.mark_in_repair(name)
-            print("Marked in repair.")
+            try:
+                service.mark_in_repair(name)
+                print("Marked in repair.")
+            except Exception as e:
+                logger.exception("Error while marking item '%s' in repair", name)
+                print(e)
 
         elif choice == "7":
             name = input("Item name: ")
-            service.mark_lost(name)
-            print("Marked lost.")
+            try:
+                service.mark_lost(name)
+                print("Marked lost.")
+            except Exception as e:
+                logger.exception("Error while marking item '%s' as lost", name)
+                print(e)
 
         elif choice == "8":
             dept = input("Department: ")
@@ -123,10 +136,12 @@ def main():
             sorting_menu(service)
 
         elif choice == "12":
+            logger.info("Inventory system closed by user")
             print("Goodbye!")
             break
 
         else:
+            logger.warning("User entered invalid menu option: %s", choice)
             print("Invalid option.")
 
 

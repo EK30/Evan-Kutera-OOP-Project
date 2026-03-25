@@ -1,0 +1,10 @@
+2026-03-25 12:53:52,905 | INFO | Added item 'Laptop' (category=general, quantity=5, department=IT, location=SET 101)
+2026-03-25 12:53:52,925 | INFO | Added item 'Chemical' (category=perishable, quantity=2, department=Science, location=Lab 2)
+2026-03-25 12:53:52,927 | INFO | Checked in item 'Tablet'
+2026-03-25 12:53:52,930 | INFO | Checked out item 'Camera' to Evan with due date 2026-04-10
+2026-03-25 12:53:52,935 | INFO | Changed sorting strategy to SortByQuantity
+2026-03-25 12:54:21,614 | INFO | Added item 'Laptop' (category=general, quantity=5, department=IT, location=SET 101)
+2026-03-25 12:54:21,631 | INFO | Added item 'Chemical' (category=perishable, quantity=2, department=Science, location=Lab 2)
+2026-03-25 12:54:21,633 | INFO | Checked in item 'Tablet'
+2026-03-25 12:54:21,634 | INFO | Checked out item 'Camera' to Evan with due date 2026-04-10
+2026-03-25 12:54:21,636 | INFO | Changed sorting strategy to SortByQuantity

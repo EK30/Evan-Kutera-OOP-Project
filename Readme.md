@@ -1,220 +1,211 @@
 Alfred State Equipment Tracking System
-CISY 6503 – Object‑Oriented Programming Semester Project
-The Alfred State Equipment Tracking System is a Python‑based inventory management application designed to help Alfred State College track equipment across departments, labs, classrooms, and student borrow/return operations.
-It uses Object‑Oriented Programming, Design Patterns, SQLite persistence, and a CLI user interface, all structured with clean architecture principles required for the semester project.
+=====================================
 
-🚀 Features
-🔷 Equipment Management
+CISY 6503 - Object-Oriented Programming Semester Project
 
-Add new equipment
-Track general and perishable equipment
-Manage quantity, location, department, and status
+This project is a Python-based inventory management system designed to help Alfred State College track equipment across departments, classrooms, labs, and student borrow/return operations. It uses object-oriented programming, design patterns, SQLite persistence, a command-line interface, logging, unit tests, and a Flask API.
 
-🔷 Checkout System
+Features
+--------
 
-Check out equipment to students/staff
-Set due dates
-Track overdue items
-Check items back in
+Equipment management
+- Add new equipment
+- Track both general and perishable equipment
+- Store quantity, location, department, and status
 
-🔷 Status Tracking
+Checkout system
+- Check out equipment to students or staff
+- Assign due dates
+- Check equipment back in
+- View overdue items
 
-Mark equipment as:
+Status tracking
+- Available
+- Checked out
+- In repair
+- Lost
 
-Available
-Checked Out
-In Repair
-Lost
+Search and filtering
+- Search by name
+- Filter by department
+- Filter by location
 
+Persistence
+- Save data using SQLite
+- Automatically create the database table if it does not exist
 
+Logging
+- Record key inventory actions in a log file
+- Track add, checkout, check-in, lost, repair, and error events
 
-🔷 Filtering & Search
+Flask API
+- Expose inventory actions through REST-style endpoints
+- Support listing items, adding items, checking items out and in, and updating status
 
-Search by name
-Filter by department
-Filter by location
-View overdue items
+Project Structure
+-----------------
 
-🔷 Persistence
-
-Data saved permanently using SQLite
-db_init.py automatically creates all tables
-
-
-🏛 Project Architecture (Clean Architecture)
 inventory_system/
-│
-├── core/
-│   ├── models/            # Item & PerishableItem classes
-│   ├── patterns/          # ItemFactory & Sorting Strategy
-│   └── services/          # InventoryService business logic
-│
-├── persistence/
-│   ├── repository.py      # Abstract repository interface
-│   ├── sqlite_repository.py# SQLite implementation
-│   └── db_init.py         # Creates database tables
-│
-├── ui/
-│   └── cli.py             # CLI user interface
-│
-├── tests/                 # Unit tests (TBD)
-└── logs/                  # Logging directory
-
-This structure cleanly separates logic, storage, and presentation.
-
-🧱 Object‑Oriented Concepts Used
-✔ Encapsulation
-All item data (name, quantity, status, location, etc.) is stored in dedicated classes.
-✔ Inheritance
-PerishableItem inherits from Item and adds expiration tracking.
-✔ Abstraction
-Repository defines the interface for all persistence implementations.
-✔ Polymorphism
-SortingStrategy allows multiple interchangeable sorting behaviors.
-✔ Composition
-InventoryService uses a repository and sorting strategy to manage items.
-
-🧩 Design Patterns Used
-🏭 Factory Pattern — ItemFactory
-
-Creates the correct item type (Item or PerishableItem)
-Simplifies object creation
-Decouples UI from model logic
-Makes adding new item types easy
-
-🔀 Strategy Pattern — Sorting
-Includes strategies:
-
-Sort By Name
-Sort By Quantity
-Sort By Expiration
-
-The user can switch sorting behavior at runtime.
-
-🗄 Database (SQLite)
-The items table includes:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ColumnPurposenameUnique equipment namequantityHow many availablecategoryGeneral or perishabledepartmentWhich Alfred State departmentlocationWhere the item is storedstatusavailable, checked_out, in_repair, lostchecked_out_byStudent or staff namedue_dateReturn dateexpiration_dateFor perishable items
-Database initialization file:
-inventory_system/persistence/db_init.py
-
-Run once to create tables:
-Shellpython inventory_system/persistence/db_init.pyShow more lines
-
-🖥 Running the Program (CLI)
-From the project root:
-Shellpython -m inventory_system.ui.cliShow more lines
-The CLI supports:
-
-Add equipment
-List all equipment
-Search
-Check out
-Check in
-Mark as lost
-Mark as in repair
-Filter
-View overdue items
-Change sorting strategy
-Exit
-
-
-👨‍🎓 Alfred State Use‑Cases
-IT Department
-
-Loan out laptops
-Track overdue checkouts
-Track equipment in repair
-
-Engineering Labs
-
-Track tools and specialized equipment
-Identify where equipment is stored (SET building, labs)
-
-Athletics
-
-Manage sports gear
-Monitor lost/damaged equipment
-
-Facilities / Maintenance
-
-Manage tools and perishable supplies
-Track expiration for PPE or chemicals
-
-
-🧪 Unit Tests (Coming Next)
-Planned tests:
-
-Item model tests
-Perishable item tests
-Checkout logic
-Repository CRUD operations
-InventoryService integration tests
-
-
-🛠 Planned Enhancements
-
-Flask REST API
-Barcode scanning
-Web dashboard
-Equipment reservation system
-Logging to file (activity log)
-
-
-📜 How This Meets the Project Rubric
-✔ Clean architecture
-✔ Multiple OOP patterns
-✔ Persistence with SQLite
-✔ CLI user interface
-✔ Real‑world application
-✔ Proper use of abstraction/inheritance/encapsulation
-✔ Version control (GitHub)
-✔ Ready for deployment (API optional next step)
-
-🎉 Project Status: Actively In Development
-This project is actively being built and improved.
-Next priority: unit tests, logging, and Flask API.
+- core/
+  - models/              Item and PerishableItem classes
+  - patterns/            ItemFactory and sorting strategies
+  - services/            InventoryService business logic
+- persistence/
+  - init.py              Database initialization
+  - repository.py        Abstract repository interface
+  - sqlite_repository.py SQLite implementation
+- api/
+  - app.py               Flask API
+- ui/
+  - cli.py               Command-line interface
+- tests/
+  - test_item.py
+  - test_perishable_item.py
+  - test_inventory_service.py
+  - test_sqlite_repository.py
+  - test_api.py
+- logs/
+  - inventory.log        Application log file
+
+Object-Oriented Concepts Used
+-----------------------------
+
+- Encapsulation: item data is stored and managed inside classes
+- Inheritance: `PerishableItem` extends `Item`
+- Abstraction: `Repository` defines the storage interface
+- Polymorphism: sorting strategies can be swapped at runtime
+- Composition: `InventoryService` uses a repository and sorting strategy
+
+Design Patterns Used
+--------------------
+
+Factory Pattern
+- `ItemFactory` creates the correct item type based on category
+
+Strategy Pattern
+- `SortByName`
+- `SortByQuantity`
+- `SortByExpiration`
+
+Database Schema
+---------------
+
+The `items` table includes:
+- `name`
+- `quantity`
+- `category`
+- `department`
+- `location`
+- `status`
+- `checked_out_by`
+- `due_date`
+- `expiration_date`
+
+Running the Project
+-------------------
+
+1. Install dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+2. Run the CLI
+
+```powershell
+python -m inventory_system.ui.cli
+```
+
+3. Run the Flask API
+
+```powershell
+python -m inventory_system.api.app
+```
+
+4. Run the unit tests
+
+```powershell
+python -m unittest discover inventory_system/tests
+```
+
+Flask API Endpoints
+-------------------
+
+- `GET /health`
+- `GET /items`
+- `GET /items?department=IT`
+- `GET /items?location=SET 445`
+- `GET /items?search=laptop`
+- `GET /items?overdue=true`
+- `GET /items/<name>`
+- `POST /items`
+- `POST /items/<name>/checkout`
+- `POST /items/<name>/checkin`
+- `PATCH /items/<name>/status`
+
+Example JSON
+------------
+
+Add an item
+
+```json
+{
+  "category": "general",
+  "name": "Laptop",
+  "quantity": 5,
+  "department": "IT",
+  "location": "SET 101"
+}
+```
+
+Check out an item
+
+```json
+{
+  "user": "Evan",
+  "due_date": "2026-04-30"
+}
+```
+
+Update item status
+
+```json
+{
+  "status": "lost"
+}
+```
+
+Unit Tests
+----------
+
+The project includes unit tests for:
+- `Item`
+- `PerishableItem`
+- `InventoryService`
+- `SQLiteRepository`
+- Basic Flask API routes
+
+Log File
+--------
+
+Application events are written to:
+
+`inventory_system/logs/inventory.log`
+
+Project Status
+--------------
+
+The project currently includes:
+- Core inventory models
+- SQLite persistence
+- CLI interface
+- Logging
+- Unit tests
+- Flask API
+
+Possible next improvements:
+- Stronger CLI input validation
+- More update and delete features
+- Web dashboard
+- Barcode scanning
+- Reservation system
