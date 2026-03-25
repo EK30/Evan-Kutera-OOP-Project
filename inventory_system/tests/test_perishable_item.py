@@ -46,6 +46,31 @@ class TestPerishableItem(unittest.TestCase):
 
         self.assertFalse(item.is_expired())
 
+    def test_to_dict_includes_expiration_date(self):
+        item = PerishableItem(
+            name="Chemical Kit",
+            quantity=2,
+            expiration_date="2026-12-01",
+            department="Science",
+            location="Lab 4",
+            status="available",
+        )
+
+        self.assertEqual(
+            item.to_dict(),
+            {
+                "name": "Chemical Kit",
+                "quantity": 2,
+                "category": "perishable",
+                "department": "Science",
+                "location": "Lab 4",
+                "status": "available",
+                "checked_out_by": None,
+                "due_date": None,
+                "expiration_date": "2026-12-01",
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
