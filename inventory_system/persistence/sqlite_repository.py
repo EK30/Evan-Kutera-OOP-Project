@@ -135,3 +135,6 @@ class SQLiteRepository(Repository):
     def delete(self, name: str):
         self.conn.execute("DELETE FROM items WHERE name = ?", (name,))
         self.conn.commit()
+
+    def close(self):
+        self.conn.close()

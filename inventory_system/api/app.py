@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from datetime import datetime
 
 from inventory_system.core.services.inventory_service import InventoryService
 from inventory_system.logs.init import setup_logging
@@ -14,9 +15,36 @@ def create_app(db_path="inventory.db"):
     initialize_database(db_path)
     repo = SQLiteRepository(db_path)
     service = InventoryService(repo)
+    app.config["INVENTORY_REPO"] = repo
 
     def serialize_items(items):
         return [item.to_dict() for item in items]
+
+    def is_valid_date(date_str):
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+            return True
+        except (TypeError, ValueError):
+            return False
+
+    @app.get("/")
+    def index():
+        return jsonify(
+            {
+                "message": "Inventory API is running.",
+                "endpoints": [
+                    "GET /health",
+                    "GET /items",
+                    "GET /items/<name>",
+                    "POST /items",
+                    "POST /items/<name>/checkout",
+                    "POST /items/<name>/checkin",
+                    "PATCH /items/<name>",
+                    "PATCH /items/<name>/status",
+                    "DELETE /items/<name>",
+                ],
+            }
+        )
 
     @app.get("/health")
     def health_check():
@@ -55,15 +83,28 @@ def create_app(db_path="inventory.db"):
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+        if not str(data["name"]).strip():
+            return jsonify({"error": "Item name cannot be empty."}), 400
 
         try:
+            quantity = int(data["quantity"])
+            if quantity < 0:
+                return jsonify({"error": "Quantity must be 0 or greater."}), 400
+
+            category = str(data["category"]).strip().lower()
+            expiration_date = data.get("expiration_date")
+            if category == "perishable" and not expiration_date:
+                return jsonify({"error": "Perishable items require expiration_date."}), 400
+            if expiration_date and not is_valid_date(expiration_date):
+                return jsonify({"error": "expiration_date must be YYYY-MM-DD."}), 400
+
             item = service.add_item(
-                data["category"],
+                category,
                 data["name"],
-                int(data["quantity"]),
+                quantity,
                 department=data.get("department", "General"),
                 location=data.get("location", "Unknown"),
-                expiration_date=data.get("expiration_date"),
+                expiration_date=expiration_date,
             )
         except Exception as exc:
             logger.exception("API failed to add item '%s'", data.get("name"))
@@ -76,6 +117,10 @@ def create_app(db_path="inventory.db"):
         data = request.get_json(silent=True) or {}
         if "user" not in data or "due_date" not in data:
             return jsonify({"error": "Both 'user' and 'due_date' are required."}), 400
+        if not str(data["user"]).strip():
+            return jsonify({"error": "User cannot be empty."}), 400
+        if not is_valid_date(data["due_date"]):
+            return jsonify({"error": "due_date must be YYYY-MM-DD."}), 400
 
         try:
             item = service.check_out_item(name, data["user"], data["due_date"])
@@ -98,6 +143,44 @@ def create_app(db_path="inventory.db"):
 
         return jsonify(item.to_dict())
 
+    @app.patch("/items/<path:name>")
+    def update_item(name):
+        data = request.get_json(silent=True) or {}
+        allowed_fields = {"quantity", "department", "location"}
+        invalid_fields = [field for field in data if field not in allowed_fields]
+
+        if not data:
+            return jsonify({"error": "No update fields provided."}), 400
+        if invalid_fields:
+            return jsonify({"error": f"Invalid fields: {', '.join(invalid_fields)}"}), 400
+
+        item = repo.get_by_name(name)
+        if not item:
+            return jsonify({"error": "Item not found."}), 404
+
+        if "quantity" in data:
+            try:
+                quantity = int(data["quantity"])
+            except (TypeError, ValueError):
+                return jsonify({"error": "quantity must be an integer."}), 400
+            if quantity < 0:
+                return jsonify({"error": "quantity must be 0 or greater."}), 400
+            item.quantity = quantity
+
+        if "department" in data:
+            if not str(data["department"]).strip():
+                return jsonify({"error": "department cannot be empty."}), 400
+            item.department = data["department"]
+
+        if "location" in data:
+            if not str(data["location"]).strip():
+                return jsonify({"error": "location cannot be empty."}), 400
+            item.location = data["location"]
+
+        repo.update(item)
+        logger.info("Updated item '%s' via PATCH /items/%s", item.name, name)
+        return jsonify(item.to_dict())
+
     @app.patch("/items/<path:name>/status")
     def update_item_status(name):
         data = request.get_json(silent=True) or {}
@@ -116,6 +199,16 @@ def create_app(db_path="inventory.db"):
             return jsonify({"error": str(exc)}), 404
 
         return jsonify(item.to_dict())
+
+    @app.delete("/items/<path:name>")
+    def delete_item(name):
+        item = repo.get_by_name(name)
+        if not item:
+            return jsonify({"error": "Item not found."}), 404
+
+        repo.delete(name)
+        logger.info("Deleted item '%s'", name)
+        return jsonify({"message": f"Item '{name}' deleted successfully."})
 
     return app
 

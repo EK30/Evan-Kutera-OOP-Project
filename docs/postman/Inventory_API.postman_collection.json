@@ -1,0 +1,209 @@
+{
+  "info": {
+    "name": "Inventory API",
+    "_postman_id": "b6a6425d-d242-4a0f-8846-6cd4e9f0e0d7",
+    "description": "Collection for Alfred State Equipment Tracking System API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Items",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/items",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Item",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"category\": \"general\",\n  \"name\": \"Demo Laptop\",\n  \"quantity\": 3,\n  \"department\": \"IT\",\n  \"location\": \"SET 101\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/items",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Item By Name",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/items/{{item_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "{{item_name}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Checkout Item",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user\": \"Student Demo\",\n  \"due_date\": \"2026-05-01\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/items/{{item_name}}/checkout",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "{{item_name}}",
+            "checkout"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Checkin Item",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/items/{{item_name}}/checkin",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "{{item_name}}",
+            "checkin"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Patch Item",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 5,\n  \"location\": \"SET 210\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/items/{{item_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "{{item_name}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Patch Item Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"in_repair\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/items/{{item_name}}/status",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "{{item_name}}",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Delete Item",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/items/{{item_name}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "items",
+            "{{item_name}}"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000"
+    },
+    {
+      "key": "item_name",
+      "value": "Demo Laptop"
+    }
+  ]
+}

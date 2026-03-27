@@ -128,9 +128,48 @@ python -m inventory_system.api.app
 python -m unittest discover inventory_system/tests
 ```
 
+Latest Verification
+-------------------
+
+Last successful verification date: 2026-03-27
+
+Commands used:
+
+```powershell
+python -m unittest inventory_system.tests.test_api
+python -m unittest discover inventory_system/tests
+```
+
+Result:
+- Both commands passed.
+
+Recommended Stable Setup (Semester Safe)
+----------------------------------------
+
+Use a project-local virtual environment so VS Code, Pylance, and your terminal always use the same Python and dependencies.
+
+1. Build the local environment (one command)
+
+```powershell
+.\scripts\setup_env.ps1
+```
+
+2. Activate it when you work on the project
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+3. If PowerShell blocks activation, run this once
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
 Flask API Endpoints
 -------------------
 
+- `GET /`
 - `GET /health`
 - `GET /items`
 - `GET /items?department=IT`
@@ -141,7 +180,15 @@ Flask API Endpoints
 - `POST /items`
 - `POST /items/<name>/checkout`
 - `POST /items/<name>/checkin`
+- `PATCH /items/<name>`
 - `PATCH /items/<name>/status`
+- `DELETE /items/<name>`
+
+Demo and API Collection
+-----------------------
+
+- 5-minute demo checklist: `docs/DEMO_CHECKLIST.md`
+- Postman collection: `docs/postman/Inventory_API.postman_collection.json`
 
 Example JSON
 ------------

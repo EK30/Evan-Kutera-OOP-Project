@@ -8,3 +8,35 @@
 2026-03-25 12:54:21,633 | INFO | Checked in item 'Tablet'
 2026-03-25 12:54:21,634 | INFO | Checked out item 'Camera' to Evan with due date 2026-04-10
 2026-03-25 12:54:21,636 | INFO | Changed sorting strategy to SortByQuantity
+2026-03-27 12:46:29,706 | INFO | Added item 'Laptop' (category=general, quantity=3, department=IT, location=SET 101)
+2026-03-27 12:46:29,753 | INFO | Added item 'Projector' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:46:29,832 | INFO | Checked out item 'Projector' to Evan with due date 2026-04-30
+2026-03-27 12:46:29,873 | INFO | Added item 'Camera' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:46:29,929 | INFO | Added item 'Wrench' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:46:29,939 | INFO | Deleted item 'Wrench'
+2026-03-27 12:46:30,033 | INFO | Added item 'Monitor' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:46:30,088 | INFO | Added item 'Tablet' (category=general, quantity=1, department=IT, location=SET 100)
+2026-03-27 12:46:30,100 | INFO | Updated item 'Tablet' via PATCH /items/Tablet
+2026-03-27 12:48:22,069 | INFO | Added item 'Laptop' (category=general, quantity=3, department=IT, location=SET 101)
+2026-03-27 12:48:22,137 | INFO | Added item 'Projector' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:22,173 | INFO | Checked out item 'Projector' to Evan with due date 2026-04-30
+2026-03-27 12:48:22,225 | INFO | Added item 'Camera' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:22,263 | INFO | Added item 'Wrench' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:22,272 | INFO | Deleted item 'Wrench'
+2026-03-27 12:48:22,355 | INFO | Added item 'Monitor' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:22,425 | INFO | Added item 'Tablet' (category=general, quantity=1, department=IT, location=SET 100)
+2026-03-27 12:48:22,440 | INFO | Updated item 'Tablet' via PATCH /items/Tablet
+2026-03-27 12:48:39,621 | INFO | Added item 'Laptop' (category=general, quantity=3, department=IT, location=SET 101)
+2026-03-27 12:48:39,678 | INFO | Added item 'Projector' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:39,703 | INFO | Checked out item 'Projector' to Evan with due date 2026-04-30
+2026-03-27 12:48:39,764 | INFO | Added item 'Camera' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:39,827 | INFO | Added item 'Wrench' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:39,843 | INFO | Deleted item 'Wrench'
+2026-03-27 12:48:39,950 | INFO | Added item 'Monitor' (category=general, quantity=1, department=General, location=Unknown)
+2026-03-27 12:48:39,993 | INFO | Added item 'Tablet' (category=general, quantity=1, department=IT, location=SET 100)
+2026-03-27 12:48:40,010 | INFO | Updated item 'Tablet' via PATCH /items/Tablet
+2026-03-27 12:48:40,060 | INFO | Added item 'Laptop' (category=general, quantity=5, department=IT, location=SET 101)
+2026-03-27 12:48:40,061 | INFO | Added item 'Chemical' (category=perishable, quantity=2, department=Science, location=Lab 2)
+2026-03-27 12:48:40,062 | INFO | Checked in item 'Tablet'
+2026-03-27 12:48:40,063 | INFO | Checked out item 'Camera' to Evan with due date 2026-04-10
+2026-03-27 12:48:40,066 | INFO | Changed sorting strategy to SortByQuantity
