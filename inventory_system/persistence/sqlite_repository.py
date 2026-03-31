@@ -15,9 +15,21 @@ class SQLiteRepository(Repository):
         self.conn = sqlite3.connect(self.db_path)
         self.conn.row_factory = sqlite3.Row
 
+    def _ensure_connection(self):
+        # Reconnect if the connection was explicitly closed.
+        if not hasattr(self, "conn") or self.conn is None:
+            self._connect()
+            return
+
+        try:
+            self.conn.execute("SELECT 1")
+        except sqlite3.ProgrammingError:
+            self._connect()
+
 
     # INSERT -----------------------------------------------------------------
     def insert(self, item):
+        self._ensure_connection()
         query = """
             INSERT INTO items 
             (name, quantity, category, department, location, status, checked_out_by, due_date, expiration_date)
@@ -40,6 +52,7 @@ class SQLiteRepository(Repository):
 
     # GET ALL ----------------------------------------------------------------
     def get_all(self):
+        self._ensure_connection()
         cursor = self.conn.execute("SELECT * FROM items")
         items = []
 
@@ -76,6 +89,7 @@ class SQLiteRepository(Repository):
 
     # GET ONE ---------------------------------------------------------------
     def get_by_name(self, name: str):
+        self._ensure_connection()
         cursor = self.conn.execute("SELECT * FROM items WHERE name = ?", (name,))
         row = cursor.fetchone()
 
@@ -109,6 +123,7 @@ class SQLiteRepository(Repository):
 
     # UPDATE -----------------------------------------------------------------
     def update(self, item):
+        self._ensure_connection()
         query = """
             UPDATE items
             SET quantity=?, category=?, department=?, location=?, status=?, 
@@ -133,8 +148,11 @@ class SQLiteRepository(Repository):
 
     # DELETE -----------------------------------------------------------------
     def delete(self, name: str):
+        self._ensure_connection()
         self.conn.execute("DELETE FROM items WHERE name = ?", (name,))
         self.conn.commit()
 
     def close(self):
-        self.conn.close()
+        if hasattr(self, "conn") and self.conn is not None:
+            self.conn.close()
+            self.conn = None

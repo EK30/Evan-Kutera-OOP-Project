@@ -20,8 +20,8 @@ def initialize_database(db_path="inventory.db"):
 
     conn.commit()
     conn.close()
-    print("Database initialized successfully!")
 
 if __name__ == "__main__":
     initialize_database()
+    print("Database initialized successfully!")
 

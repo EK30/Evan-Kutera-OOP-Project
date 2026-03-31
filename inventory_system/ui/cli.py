@@ -58,7 +58,11 @@ def main():
         if choice == "1":
             category = input("Category (general/perishable): ")
             name = input("Item name: ")
-            qty = int(input("Quantity: "))
+            try:
+                qty = int(input("Quantity: "))
+            except ValueError:
+                print("Quantity must be a whole number.")
+                continue
             dept = input("Department: ")
             loc = input("Location (e.g., SET 445): ")
 
