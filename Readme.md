@@ -172,6 +172,10 @@ Flask API Endpoints
 - `GET /`
 - `GET /health`
 - `GET /items`
+- `GET /items?status=available`
+- `GET /items?status=checked_out`
+- `GET /items?status=in_repair`
+- `GET /items?status=lost`
 - `GET /items?department=IT`
 - `GET /items?location=SET 445`
 - `GET /items?search=laptop`

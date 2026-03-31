@@ -60,9 +60,18 @@ def create_app(db_path="inventory.db"):
         location = request.args.get("location")
         search = request.args.get("search")
         overdue = request.args.get("overdue")
+        status = request.args.get("status")
+        allowed_statuses = {"available", "checked_out", "in_repair", "lost"}
 
         if overdue and overdue.lower() == "true":
             return jsonify(serialize_items(service.get_overdue_items()))
+        if status:
+            status = status.strip().lower()
+            if status not in allowed_statuses:
+                return jsonify({"error": "status must be one of: available, checked_out, in_repair, lost."}), 400
+            return jsonify(
+                serialize_items([item for item in service.list_items() if item.status == status])
+            )
         if department:
             return jsonify(serialize_items(service.filter_by_department(department)))
         if location:

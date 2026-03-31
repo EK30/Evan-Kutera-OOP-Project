@@ -131,6 +131,34 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(delete_response.status_code, 200)
         self.assertEqual(get_response.status_code, 404)
 
+    def test_get_items_filters_by_status(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "Laptop A", "quantity": 1},
+        )
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "Laptop B", "quantity": 1},
+        )
+        self.client.post(
+            "/items/Laptop B/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+
+        response = self.client.get("/items?status=checked_out")
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(payload), 1)
+        self.assertEqual(payload[0]["name"], "Laptop B")
+        self.assertEqual(payload[0]["status"], "checked_out")
+
+    def test_get_items_rejects_invalid_status(self):
+        response = self.client.get("/items?status=damaged")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("status must be one of", response.get_json()["error"])
+
 
 if __name__ == "__main__":
     unittest.main()
