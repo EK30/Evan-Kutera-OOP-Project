@@ -249,6 +249,64 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(after_return["quantity"], 2)
         self.assertEqual(after_return["status"], "available")
 
+    def test_multi_checkout_and_two_checkins_restore_full_quantity(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "MultiReturnItem", "quantity": 2},
+        )
+        self.client.post(
+            "/items/MultiReturnItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+        self.client.post(
+            "/items/MultiReturnItem/checkout",
+            json={"user": "Alex", "due_date": "2026-05-02"},
+        )
+
+        after_two_checkouts = self.client.get("/items/MultiReturnItem").get_json()
+        first_checkin = self.client.post("/items/MultiReturnItem/checkin")
+        after_first_checkin = self.client.get("/items/MultiReturnItem").get_json()
+        second_checkin = self.client.post("/items/MultiReturnItem/checkin")
+        after_second_checkin = self.client.get("/items/MultiReturnItem").get_json()
+
+        self.assertEqual(after_two_checkouts["quantity"], 0)
+        self.assertEqual(after_two_checkouts["status"], "checked_out")
+        self.assertEqual(first_checkin.status_code, 200)
+        self.assertEqual(after_first_checkin["quantity"], 1)
+        self.assertEqual(after_first_checkin["status"], "checked_out")
+        self.assertEqual(second_checkin.status_code, 200)
+        self.assertEqual(after_second_checkin["quantity"], 2)
+        self.assertEqual(after_second_checkin["status"], "available")
+
+    def test_multi_checkout_third_checkout_fails_then_recovers_after_checkin(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "RecoverItem", "quantity": 2},
+        )
+        self.client.post(
+            "/items/RecoverItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+        self.client.post(
+            "/items/RecoverItem/checkout",
+            json={"user": "Alex", "due_date": "2026-05-02"},
+        )
+
+        third_checkout = self.client.post(
+            "/items/RecoverItem/checkout",
+            json={"user": "Taylor", "due_date": "2026-05-03"},
+        )
+        checkin = self.client.post("/items/RecoverItem/checkin")
+        fourth_checkout = self.client.post(
+            "/items/RecoverItem/checkout",
+            json={"user": "Taylor", "due_date": "2026-05-03"},
+        )
+
+        self.assertEqual(third_checkout.status_code, 400)
+        self.assertIn("out of stock", third_checkout.get_json()["error"].lower())
+        self.assertEqual(checkin.status_code, 200)
+        self.assertEqual(fourth_checkout.status_code, 200)
+
     def test_checkin_without_checkout_returns_400(self):
         self.client.post(
             "/items",
