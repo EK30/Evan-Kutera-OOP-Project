@@ -171,6 +171,7 @@ Flask API Endpoints
 
 - `GET /`
 - `GET /health`
+- `GET /stats`
 - `GET /items`
 - `GET /items?status=available`
 - `GET /items?status=checked_out`

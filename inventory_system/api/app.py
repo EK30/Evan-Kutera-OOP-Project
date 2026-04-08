@@ -38,6 +38,7 @@ def create_app(db_path="inventory.db"):
                 "message": "Inventory API is running.",
                 "endpoints": [
                     "GET /health",
+                    "GET /stats",
                     "GET /items",
                     "GET /items/<name>",
                     "POST /items",
@@ -53,6 +54,33 @@ def create_app(db_path="inventory.db"):
     @app.get("/health")
     def health_check():
         return jsonify({"status": "ok"})
+
+    @app.get("/stats")
+    def get_stats():
+        items = service.list_items()
+        counts = {
+            "available": 0,
+            "checked_out": 0,
+            "in_repair": 0,
+            "lost": 0,
+        }
+
+        for item in items:
+            if item.status in counts:
+                counts[item.status] += 1
+
+        return jsonify(
+            {
+                "total_items": len(items),
+                "total_quantity": sum(item.quantity for item in items),
+                "available": counts["available"],
+                "checked_out": counts["checked_out"],
+                "in_repair": counts["in_repair"],
+                "lost": counts["lost"],
+                "perishable_count": sum(1 for item in items if item.category == "perishable"),
+                "overdue_count": len(service.get_overdue_items()),
+            }
+        )
 
     @app.get("/items")
     def get_items():

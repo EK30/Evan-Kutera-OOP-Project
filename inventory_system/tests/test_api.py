@@ -159,6 +159,63 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("status must be one of", response.get_json()["error"])
 
+    def test_checkout_nonexistent_item_returns_404(self):
+        response = self.client.post(
+            "/items/DoesNotExist/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Item not found", response.get_json()["error"])
+
+    def test_get_nonexistent_item_returns_404(self):
+        response = self.client.get("/items/DoesNotExist")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Item not found", response.get_json()["error"])
+
+    def test_patch_nonexistent_item_returns_404(self):
+        response = self.client.patch(
+            "/items/DoesNotExist",
+            json={"quantity": 3},
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Item not found", response.get_json()["error"])
+
+    def test_delete_nonexistent_item_returns_404(self):
+        response = self.client.delete("/items/DoesNotExist")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Item not found", response.get_json()["error"])
+
+    def test_stats_endpoint_returns_expected_counts(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "Item A", "quantity": 2},
+        )
+        self.client.post(
+            "/items",
+            json={"category": "perishable", "name": "Item B", "quantity": 1, "expiration_date": "2026-12-31"},
+        )
+        self.client.post(
+            "/items/Item A/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+        self.client.patch("/items/Item B/status", json={"status": "in_repair"})
+
+        response = self.client.get("/stats")
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["total_items"], 2)
+        self.assertEqual(payload["total_quantity"], 3)
+        self.assertEqual(payload["available"], 0)
+        self.assertEqual(payload["checked_out"], 1)
+        self.assertEqual(payload["in_repair"], 1)
+        self.assertEqual(payload["lost"], 0)
+        self.assertEqual(payload["perishable_count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
