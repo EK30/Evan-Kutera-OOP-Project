@@ -58,12 +58,13 @@ class TestItem(unittest.TestCase):
         with self.assertRaises(ValueError):
             item.check_out("Evan", "2026-04-15")
 
-    def test_check_out_rejects_when_item_already_checked_out(self):
+    def test_check_out_allows_multiple_checkouts_while_stock_remains(self):
         item = Item(name="Projector", quantity=2, category="general")
         item.check_out("Evan", "2026-04-15")
+        item.check_out("Alex", "2026-04-20")
 
         with self.assertRaises(ValueError):
-            item.check_out("Alex", "2026-04-20")
+            item.check_out("Taylor", "2026-04-25")
 
     def test_check_in_rejects_when_item_not_checked_out(self):
         item = Item(name="Projector", quantity=2, category="general")

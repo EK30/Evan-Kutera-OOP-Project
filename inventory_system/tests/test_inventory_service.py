@@ -10,6 +10,7 @@ from inventory_system.core.services.inventory_service import InventoryService
 class FakeRepository:
     def __init__(self, items=None):
         self.items = list(items or [])
+        self.checkouts = []
 
     def insert(self, item):
         self.items.append(item)
@@ -31,6 +32,30 @@ class FakeRepository:
 
     def delete(self, name):
         self.items = [item for item in self.items if item.name != name]
+
+    def insert_checkout(self, item_name, borrower, due_date):
+        self.checkouts.append(
+            {
+                "item_name": item_name,
+                "borrower": borrower,
+                "due_date": due_date,
+                "returned_at": None,
+            }
+        )
+
+    def return_oldest_checkout(self, item_name):
+        for checkout in self.checkouts:
+            if checkout["item_name"] == item_name and checkout["returned_at"] is None:
+                checkout["returned_at"] = "returned"
+                return True
+        return False
+
+    def count_active_checkouts(self, item_name):
+        return sum(
+            1
+            for checkout in self.checkouts
+            if checkout["item_name"] == item_name and checkout["returned_at"] is None
+        )
 
 
 class TestInventoryService(unittest.TestCase):
@@ -90,9 +115,9 @@ class TestInventoryService(unittest.TestCase):
         self.assertEqual(item.checked_out_by, "Evan")
 
     def test_check_in_item_restores_available_status(self):
-        item = Item("Tablet", 1, "general")
-        item.check_out("Evan", "2026-04-10")
+        item = Item("Tablet", 0, "general", status="checked_out")
         repo = FakeRepository([item])
+        repo.insert_checkout("Tablet", "Evan", "2026-04-10")
         service = InventoryService(repo)
 
         updated_item = service.check_in_item("Tablet")
@@ -111,6 +136,21 @@ class TestInventoryService(unittest.TestCase):
 
         self.assertEqual(len(service.filter_by_department("IT")), 1)
         self.assertEqual(len(service.filter_by_location("Shop")), 1)
+
+    def test_check_out_item_allows_multiple_borrowers_until_stock_runs_out(self):
+        repo = FakeRepository([Item("Camera", 2, "general")])
+        service = InventoryService(repo)
+
+        first = service.check_out_item("Camera", "Evan", "2026-04-10")
+        self.assertEqual(first.quantity, 1)
+
+        second = service.check_out_item("Camera", "Alex", "2026-04-11")
+
+        self.assertEqual(second.quantity, 0)
+        self.assertEqual(repo.count_active_checkouts("Camera"), 2)
+
+        with self.assertRaises(ValueError):
+            service.check_out_item("Camera", "Taylor", "2026-04-12")
 
     def test_get_overdue_items_returns_past_due_checked_out_items(self):
         overdue_date = (datetime.now().date() - timedelta(days=3)).isoformat()

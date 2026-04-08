@@ -14,6 +14,17 @@ class SQLiteRepository(Repository):
         # row_factory lets us access columns by name instead of index.
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS checkouts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_name TEXT NOT NULL,
+                borrower TEXT NOT NULL,
+                due_date TEXT NOT NULL,
+                returned_at TEXT,
+                FOREIGN KEY (item_name) REFERENCES items(name)
+            );
+        """)
+        self.conn.commit()
 
     def _ensure_connection(self):
         # Reconnect if the connection was explicitly closed.
@@ -58,6 +69,19 @@ class SQLiteRepository(Repository):
 
         # Rebuild each database row as the correct Python object type.
         for row in cursor:
+            checkout_summary = self._get_checkout_summary(row["name"])
+            status = row["status"]
+            checked_out_by = None
+            due_date = None
+
+            if status not in {"in_repair", "lost"}:
+                if checkout_summary["active_count"] > 0:
+                    status = "checked_out"
+                    checked_out_by = checkout_summary["borrower"]
+                    due_date = checkout_summary["due_date"]
+                else:
+                    status = "available"
+
             if row["category"] == "perishable":
                 items.append(
                     PerishableItem(
@@ -66,9 +90,9 @@ class SQLiteRepository(Repository):
                         expiration_date=row["expiration_date"],
                         department=row["department"],
                         location=row["location"],
-                        status=row["status"],
-                        checked_out_by=row["checked_out_by"],
-                        due_date=row["due_date"]
+                        status=status,
+                        checked_out_by=checked_out_by,
+                        due_date=due_date
                     )
                 )
             else:
@@ -79,9 +103,9 @@ class SQLiteRepository(Repository):
                         category=row["category"],
                         department=row["department"],
                         location=row["location"],
-                        status=row["status"],
-                        checked_out_by=row["checked_out_by"],
-                        due_date=row["due_date"]
+                        status=status,
+                        checked_out_by=checked_out_by,
+                        due_date=due_date
                     )
                 )
         return items
@@ -96,6 +120,19 @@ class SQLiteRepository(Repository):
         if not row:
             return None
 
+        checkout_summary = self._get_checkout_summary(name)
+        status = row["status"]
+        checked_out_by = None
+        due_date = None
+
+        if status not in {"in_repair", "lost"}:
+            if checkout_summary["active_count"] > 0:
+                status = "checked_out"
+                checked_out_by = checkout_summary["borrower"]
+                due_date = checkout_summary["due_date"]
+            else:
+                status = "available"
+
         # Match the object type to the saved category before returning it.
         if row["category"] == "perishable":
             return PerishableItem(
@@ -104,9 +141,9 @@ class SQLiteRepository(Repository):
                 expiration_date=row["expiration_date"],
                 department=row["department"],
                 location=row["location"],
-                status=row["status"],
-                checked_out_by=row["checked_out_by"],
-                due_date=row["due_date"]
+                status=status,
+                checked_out_by=checked_out_by,
+                due_date=due_date
             )
         else:
             return Item(
@@ -115,9 +152,9 @@ class SQLiteRepository(Repository):
                 category=row["category"],
                 department=row["department"],
                 location=row["location"],
-                status=row["status"],
-                checked_out_by=row["checked_out_by"],
-                due_date=row["due_date"]
+                status=status,
+                checked_out_by=checked_out_by,
+                due_date=due_date
             )
 
 
@@ -160,3 +197,77 @@ class SQLiteRepository(Repository):
                 # In debug/threaded runs, teardown can occur from a different thread.
                 pass
             self.conn = None
+
+    # CHECKOUTS --------------------------------------------------------------
+    def insert_checkout(self, item_name: str, borrower: str, due_date: str):
+        self._ensure_connection()
+        self.conn.execute(
+            """
+            INSERT INTO checkouts (item_name, borrower, due_date, returned_at)
+            VALUES (?, ?, ?, NULL)
+            """,
+            (item_name, borrower, due_date),
+        )
+        self.conn.commit()
+
+    def return_oldest_checkout(self, item_name: str) -> bool:
+        self._ensure_connection()
+        row = self.conn.execute(
+            """
+            SELECT id
+            FROM checkouts
+            WHERE item_name = ? AND returned_at IS NULL
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (item_name,),
+        ).fetchone()
+
+        if not row:
+            return False
+
+        self.conn.execute(
+            "UPDATE checkouts SET returned_at = ? WHERE id = ?",
+            (datetime.now().isoformat(timespec="seconds"), row["id"]),
+        )
+        self.conn.commit()
+        return True
+
+    def count_active_checkouts(self, item_name: str) -> int:
+        self._ensure_connection()
+        row = self.conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM checkouts
+            WHERE item_name = ? AND returned_at IS NULL
+            """,
+            (item_name,),
+        ).fetchone()
+        return int(row["count"])
+
+    def _get_checkout_summary(self, item_name: str):
+        self._ensure_connection()
+        active_count_row = self.conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM checkouts
+            WHERE item_name = ? AND returned_at IS NULL
+            """,
+            (item_name,),
+        ).fetchone()
+        oldest_active_row = self.conn.execute(
+            """
+            SELECT borrower, due_date
+            FROM checkouts
+            WHERE item_name = ? AND returned_at IS NULL
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (item_name,),
+        ).fetchone()
+
+        return {
+            "active_count": int(active_count_row["count"]),
+            "borrower": oldest_active_row["borrower"] if oldest_active_row else None,
+            "due_date": oldest_active_row["due_date"] if oldest_active_row else None,
+        }

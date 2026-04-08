@@ -18,6 +18,17 @@ def initialize_database(db_path="inventory.db"):
         );
     """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS checkouts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_name TEXT NOT NULL,
+            borrower TEXT NOT NULL,
+            due_date TEXT NOT NULL,
+            returned_at TEXT,
+            FOREIGN KEY (item_name) REFERENCES items(name)
+        );
+    """)
+
     conn.commit()
     conn.close()
 

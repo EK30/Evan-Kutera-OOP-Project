@@ -46,6 +46,7 @@ class InventoryService:
             raise ValueError("Item not found.")
 
         item.check_out(user, due_date)
+        self.repo.insert_checkout(item.name, user, due_date)
         self.repo.update(item)
         self.logger.info(
             "Checked out item '%s' to %s with due date %s",
@@ -62,7 +63,16 @@ class InventoryService:
             self.logger.warning("Check-in failed because item '%s' was not found", name)
             raise ValueError("Item not found.")
 
-        item.check_in()
+        returned = self.repo.return_oldest_checkout(name)
+        if not returned:
+            self.logger.warning("Check-in failed because item '%s' had no active checkouts", name)
+            raise ValueError("Item is not currently checked out.")
+
+        item.update_quantity(1)
+        active_checkouts = self.repo.count_active_checkouts(name)
+        item.status = "checked_out" if active_checkouts > 0 else "available"
+        item.checked_out_by = None
+        item.due_date = None
         self.repo.update(item)
         self.logger.info("Checked in item '%s'", item.name)
         return item

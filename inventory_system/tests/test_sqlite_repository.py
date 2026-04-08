@@ -71,6 +71,20 @@ class TestSQLiteRepository(unittest.TestCase):
 
         self.assertIsNone(self.repo.get_by_name("Tablet"))
 
+    def test_checkout_records_affect_item_status(self):
+        item = Item("Camera", 2, "general")
+        self.repo.insert(item)
+
+        self.repo.insert_checkout("Camera", "Evan", "2026-06-01")
+        checked_out_item = self.repo.get_by_name("Camera")
+        self.assertEqual(checked_out_item.status, "checked_out")
+        self.assertEqual(checked_out_item.checked_out_by, "Evan")
+
+        returned = self.repo.return_oldest_checkout("Camera")
+        self.assertTrue(returned)
+        available_item = self.repo.get_by_name("Camera")
+        self.assertEqual(available_item.status, "available")
+
 
 if __name__ == "__main__":
     unittest.main()

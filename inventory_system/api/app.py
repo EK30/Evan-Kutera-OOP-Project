@@ -17,10 +17,6 @@ def create_app(db_path="inventory.db"):
     service = InventoryService(repo)
     app.config["INVENTORY_REPO"] = repo
 
-    @app.teardown_appcontext
-    def close_repo(_exception):
-        repo.close()
-
     def serialize_items(items):
         return [item.to_dict() for item in items]
 

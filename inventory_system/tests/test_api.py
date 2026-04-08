@@ -207,7 +207,7 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn("Item not found", response.get_json()["error"])
 
-    def test_checkout_same_item_twice_returns_400(self):
+    def test_checkout_allows_multiple_until_out_of_stock(self):
         self.client.post(
             "/items",
             json={"category": "general", "name": "SharedItem", "quantity": 2},
@@ -220,10 +220,15 @@ class TestFlaskAPI(unittest.TestCase):
             "/items/SharedItem/checkout",
             json={"user": "Alex", "due_date": "2026-05-02"},
         )
+        third = self.client.post(
+            "/items/SharedItem/checkout",
+            json={"user": "Taylor", "due_date": "2026-05-03"},
+        )
 
         self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 400)
-        self.assertIn("already checked out", second.get_json()["error"])
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(third.status_code, 400)
+        self.assertIn("out of stock", third.get_json()["error"].lower())
 
     def test_checkin_increases_quantity_after_checkout(self):
         self.client.post(
