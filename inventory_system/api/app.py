@@ -90,24 +90,42 @@ def create_app(db_path="inventory.db"):
         overdue = request.args.get("overdue")
         status = request.args.get("status")
         allowed_statuses = {"available", "checked_out", "in_repair", "lost"}
+        items = service.list_items()
 
-        if overdue and overdue.lower() == "true":
-            return jsonify(serialize_items(service.get_overdue_items()))
         if status:
             status = status.strip().lower()
             if status not in allowed_statuses:
                 return jsonify({"error": "status must be one of: available, checked_out, in_repair, lost."}), 400
-            return jsonify(
-                serialize_items([item for item in service.list_items() if item.status == status])
-            )
-        if department:
-            return jsonify(serialize_items(service.filter_by_department(department)))
-        if location:
-            return jsonify(serialize_items(service.filter_by_location(location)))
-        if search:
-            return jsonify(serialize_items(service.search_items(search)))
+            items = [item for item in items if item.status == status]
 
-        return jsonify(serialize_items(service.list_items()))
+        if department:
+            items = [item for item in items if item.department == department]
+
+        if location:
+            items = [item for item in items if item.location == location]
+
+        if search:
+            term = search.lower()
+            items = [item for item in items if term in item.name.lower()]
+
+        if overdue is not None:
+            overdue_value = overdue.strip().lower()
+            if overdue_value not in {"true", "false"}:
+                return jsonify({"error": "overdue must be 'true' or 'false'."}), 400
+
+            today = datetime.now().date()
+            if overdue_value == "true":
+                items = [
+                    item for item in items
+                    if item.status == "checked_out" and item.due_date and item.due_date < today
+                ]
+            else:
+                items = [
+                    item for item in items
+                    if not (item.status == "checked_out" and item.due_date and item.due_date < today)
+                ]
+
+        return jsonify(serialize_items(items))
 
     @app.get("/items/<path:name>")
     def get_item(name):

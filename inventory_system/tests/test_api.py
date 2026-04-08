@@ -159,6 +159,45 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("status must be one of", response.get_json()["error"])
 
+    def test_get_items_supports_composable_filters(self):
+        self.client.post(
+            "/items",
+            json={
+                "category": "general",
+                "name": "Lab Laptop",
+                "quantity": 1,
+                "department": "IT",
+                "location": "SET 100",
+            },
+        )
+        self.client.post(
+            "/items",
+            json={
+                "category": "general",
+                "name": "Office Laptop",
+                "quantity": 1,
+                "department": "Admin",
+                "location": "SET 100",
+            },
+        )
+        self.client.post(
+            "/items/Lab Laptop/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+
+        response = self.client.get("/items?status=checked_out&department=IT&search=laptop")
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(payload), 1)
+        self.assertEqual(payload[0]["name"], "Lab Laptop")
+
+    def test_get_items_rejects_invalid_overdue_filter(self):
+        response = self.client.get("/items?overdue=maybe")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("overdue must be", response.get_json()["error"])
+
     def test_checkout_nonexistent_item_returns_404(self):
         response = self.client.post(
             "/items/DoesNotExist/checkout",
