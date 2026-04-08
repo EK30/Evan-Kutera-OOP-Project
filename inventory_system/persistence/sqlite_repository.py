@@ -12,7 +12,7 @@ class SQLiteRepository(Repository):
 
     def _connect(self):
         # row_factory lets us access columns by name instead of index.
-        self.conn = sqlite3.connect(self.db_path)
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
 
     def _ensure_connection(self):
@@ -154,5 +154,9 @@ class SQLiteRepository(Repository):
 
     def close(self):
         if hasattr(self, "conn") and self.conn is not None:
-            self.conn.close()
+            try:
+                self.conn.close()
+            except sqlite3.ProgrammingError:
+                # In debug/threaded runs, teardown can occur from a different thread.
+                pass
             self.conn = None
