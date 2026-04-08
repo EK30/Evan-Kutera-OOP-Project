@@ -41,14 +41,22 @@ class TestItem(unittest.TestCase):
         item = Item(name="Projector", quantity=1, category="general")
 
         item.check_out("Evan", "2026-04-15")
+        self.assertEqual(item.quantity, 0)
         self.assertEqual(item.status, "checked_out")
         self.assertEqual(item.checked_out_by, "Evan")
         self.assertEqual(item.due_date, date(2026, 4, 15))
 
         item.check_in()
+        self.assertEqual(item.quantity, 1)
         self.assertEqual(item.status, "available")
         self.assertIsNone(item.checked_out_by)
         self.assertIsNone(item.due_date)
+
+    def test_check_out_rejects_when_out_of_stock(self):
+        item = Item(name="Projector", quantity=0, category="general")
+
+        with self.assertRaises(ValueError):
+            item.check_out("Evan", "2026-04-15")
 
     def test_to_dict_returns_expected_fields(self):
         item = Item(

@@ -40,12 +40,17 @@ class Item:
 
     def check_out(self, user: str, due_date: str):
         # Checking out an item updates both its status and borrower details.
+        if self.quantity <= 0:
+            raise ValueError("Item is out of stock.")
+
+        self.quantity -= 1
         self.status = "checked_out"
         self.checked_out_by = user
         self.due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
 
     def check_in(self):
         # Returning an item clears any active checkout information.
+        self.quantity += 1
         self.status = "available"
         self.checked_out_by = None
         self.due_date = None

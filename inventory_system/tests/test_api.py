@@ -248,7 +248,7 @@ class TestFlaskAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(payload["total_items"], 2)
-        self.assertEqual(payload["total_quantity"], 3)
+        self.assertEqual(payload["total_quantity"], 2)
         self.assertEqual(payload["available"], 0)
         self.assertEqual(payload["checked_out"], 1)
         self.assertEqual(payload["in_repair"], 1)
