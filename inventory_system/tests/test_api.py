@@ -368,6 +368,47 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(payload["lost"], 0)
         self.assertEqual(payload["perishable_count"], 1)
 
+    def test_error_contract_missing_checkout_fields(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "ContractItem", "quantity": 1},
+        )
+        response = self.client.post(
+            "/items/ContractItem/checkout",
+            json={"user": "Evan"},
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", payload)
+        self.assertIn("code", payload)
+        self.assertEqual(payload["code"], "missing_checkout_fields")
+
+    def test_error_contract_bad_due_date(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "ContractDateItem", "quantity": 1},
+        )
+        response = self.client.post(
+            "/items/ContractDateItem/checkout",
+            json={"user": "Evan", "due_date": "05/01/2026"},
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", payload)
+        self.assertIn("code", payload)
+        self.assertEqual(payload["code"], "invalid_due_date")
+
+    def test_error_contract_not_found(self):
+        response = self.client.get("/items/ContractMissingItem")
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("error", payload)
+        self.assertIn("code", payload)
+        self.assertEqual(payload["code"], "item_not_found")
+
 
 if __name__ == "__main__":
     unittest.main()
