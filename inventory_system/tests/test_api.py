@@ -225,6 +225,35 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(second.status_code, 400)
         self.assertIn("already checked out", second.get_json()["error"])
 
+    def test_checkin_increases_quantity_after_checkout(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "ReturnItem", "quantity": 2},
+        )
+        self.client.post(
+            "/items/ReturnItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+
+        before_return = self.client.get("/items/ReturnItem").get_json()
+        checkin_response = self.client.post("/items/ReturnItem/checkin")
+        after_return = self.client.get("/items/ReturnItem").get_json()
+
+        self.assertEqual(checkin_response.status_code, 200)
+        self.assertEqual(before_return["quantity"], 1)
+        self.assertEqual(after_return["quantity"], 2)
+        self.assertEqual(after_return["status"], "available")
+
+    def test_checkin_without_checkout_returns_400(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "NoCheckoutItem", "quantity": 1},
+        )
+        response = self.client.post("/items/NoCheckoutItem/checkin")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not currently checked out", response.get_json()["error"])
+
     def test_get_nonexistent_item_returns_404(self):
         response = self.client.get("/items/DoesNotExist")
 

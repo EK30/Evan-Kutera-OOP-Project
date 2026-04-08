@@ -65,6 +65,12 @@ class TestItem(unittest.TestCase):
         with self.assertRaises(ValueError):
             item.check_out("Alex", "2026-04-20")
 
+    def test_check_in_rejects_when_item_not_checked_out(self):
+        item = Item(name="Projector", quantity=2, category="general")
+
+        with self.assertRaises(ValueError):
+            item.check_in()
+
     def test_to_dict_returns_expected_fields(self):
         item = Item(
             name="Laptop",

@@ -200,7 +200,9 @@ def create_app(db_path="inventory.db"):
             item = service.check_in_item(name)
         except ValueError as exc:
             logger.exception("API failed to check in item '%s'", name)
-            return jsonify({"error": str(exc)}), 404
+            if "not found" in str(exc).lower():
+                return jsonify({"error": str(exc)}), 404
+            return jsonify({"error": str(exc)}), 400
 
         return jsonify(item.to_dict())
 

@@ -53,6 +53,9 @@ class Item:
 
     def check_in(self):
         # Returning an item clears any active checkout information.
+        if self.status != "checked_out":
+            raise ValueError("Item is not currently checked out.")
+
         self.quantity += 1
         self.status = "available"
         self.checked_out_by = None
