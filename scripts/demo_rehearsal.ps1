@@ -1,6 +1,6 @@
 param(
     [string]$HostUrl = "http://127.0.0.1:5000",
-    [string]$ItemName = "Demo-Laptop"
+    [string]$ItemName = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,7 +9,14 @@ Set-Location $root
 
 function Resolve-PythonCommand {
     if (Test-Path ".\.venv\Scripts\python.exe") {
-        return ".\.venv\Scripts\python.exe"
+        try {
+            & ".\.venv\Scripts\python.exe" --version *> $null
+            if ($LASTEXITCODE -eq 0) {
+                return ".\.venv\Scripts\python.exe"
+            }
+        } catch {
+            # Fall back to system launcher if local venv is stale.
+        }
     }
 
     $python = Get-Command python -ErrorAction SilentlyContinue
@@ -100,7 +107,12 @@ try {
     Write-Host "API health check passed." -ForegroundColor Green
 
     Write-Host "`n[3/4] Running demo API scenario..." -ForegroundColor Yellow
-    $null = Invoke-ApiJson -Method "POST" -Uri "$HostUrl/items" -Body @{
+    if ([string]::IsNullOrWhiteSpace($ItemName)) {
+        $ItemName = "Demo-Laptop-$([DateTime]::Now.ToString('yyyyMMddHHmmss'))"
+    }
+    Write-Host "Using demo item: $ItemName"
+
+    $createItem = Invoke-ApiJson -Method "POST" -Uri "$HostUrl/items" -Body @{
         category   = "general"
         name       = $ItemName
         quantity   = 2
@@ -126,8 +138,11 @@ try {
     $checkin = Invoke-ApiJson -Method "POST" -Uri "$HostUrl/items/$ItemName/checkin"
     $finalItem = Invoke-ApiJson -Method "GET" -Uri "$HostUrl/items/$ItemName"
 
+    if ($createItem.StatusCode -ne 201) {
+        throw "Expected item creation to return 201. Got $($createItem.StatusCode). Response: $($createItem.Payload | ConvertTo-Json -Compress)"
+    }
     if ($checkout1.StatusCode -ne 200 -or $checkout2.StatusCode -ne 200) {
-        throw "Expected first two checkouts to succeed."
+        throw "Expected first two checkouts to succeed. checkout1=$($checkout1.StatusCode), checkout2=$($checkout2.StatusCode), response1=$($checkout1.Payload | ConvertTo-Json -Compress), response2=$($checkout2.Payload | ConvertTo-Json -Compress)"
     }
     if ($checkout3.StatusCode -ne 400) {
         throw "Expected third checkout to fail with 400 when out of stock."
