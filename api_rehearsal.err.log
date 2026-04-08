@@ -4,15 +4,10 @@ Press CTRL+C to quit
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 367-425-126
-127.0.0.1 - - [08/Apr/2026 17:19:52] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:19:52] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:19:52] "GET /stats HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:19:52] "GET /items?status=checked_out HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:20:14] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:20:40] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:20:41] "GET /items?status=checked_out HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:20:41] "POST /items/RehearsalLaptop/checkout HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:20:41] "GET /stats HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:20:41] "GET /items/RehearsalLaptop HTTP/1.1" 200 -
-127.0.0.1 - - [08/Apr/2026 17:20:41] "DELETE /items/RehearsalLaptop HTTP/1.1" 200 -
- * Detected change in 'C:\\Users\\evank\\OneDrive - Alfred State College\\Evan-Kutera-OOP-Project\\inventory_system\\api\\app.py', reloading
+127.0.0.1 - - [08/Apr/2026 17:57:10] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [08/Apr/2026 17:57:10] "POST /items HTTP/1.1" 201 -
+127.0.0.1 - - [08/Apr/2026 17:57:10] "POST /items/Demo-Laptop/checkout HTTP/1.1" 200 -
+127.0.0.1 - - [08/Apr/2026 17:57:10] "POST /items/Demo-Laptop/checkout HTTP/1.1" 200 -
+127.0.0.1 - - [08/Apr/2026 17:57:10] "POST /items/Demo-Laptop/checkout HTTP/1.1" 400 -
+127.0.0.1 - - [08/Apr/2026 17:57:10] "POST /items/Demo-Laptop/checkin HTTP/1.1" 200 -
+127.0.0.1 - - [08/Apr/2026 17:57:10] "GET /items/Demo-Laptop HTTP/1.1" 200 -
