@@ -88,6 +88,7 @@ class TestFlaskAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("YYYY-MM-DD", response.get_json()["error"])
+        self.assertEqual(response.get_json()["code"], "invalid_due_date")
 
     def test_patch_item_updates_fields(self):
         self.client.post(
@@ -158,6 +159,7 @@ class TestFlaskAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("status must be one of", response.get_json()["error"])
+        self.assertEqual(response.get_json()["code"], "invalid_status_filter")
 
     def test_get_items_supports_composable_filters(self):
         self.client.post(
@@ -322,6 +324,7 @@ class TestFlaskAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertIn("Item not found", response.get_json()["error"])
+        self.assertEqual(response.get_json()["code"], "item_not_found")
 
     def test_patch_nonexistent_item_returns_404(self):
         response = self.client.patch(

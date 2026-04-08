@@ -20,6 +20,9 @@ def create_app(db_path="inventory.db"):
     def serialize_items(items):
         return [item.to_dict() for item in items]
 
+    def error_response(message, code, status):
+        return jsonify({"error": message, "code": code}), status
+
     def is_valid_date(date_str):
         try:
             datetime.strptime(date_str, "%Y-%m-%d")
@@ -91,7 +94,11 @@ def create_app(db_path="inventory.db"):
         if status:
             status = status.strip().lower()
             if status not in allowed_statuses:
-                return jsonify({"error": "status must be one of: available, checked_out, in_repair, lost."}), 400
+                return error_response(
+                    "status must be one of: available, checked_out, in_repair, lost.",
+                    "invalid_status_filter",
+                    400,
+                )
             items = [item for item in items if item.status == status]
 
         if department:
@@ -107,7 +114,7 @@ def create_app(db_path="inventory.db"):
         if overdue is not None:
             overdue_value = overdue.strip().lower()
             if overdue_value not in {"true", "false"}:
-                return jsonify({"error": "overdue must be 'true' or 'false'."}), 400
+                return error_response("overdue must be 'true' or 'false'.", "invalid_overdue_filter", 400)
 
             today = datetime.now().date()
             if overdue_value == "true":
@@ -127,7 +134,7 @@ def create_app(db_path="inventory.db"):
     def get_item(name):
         item = repo.get_by_name(name)
         if not item:
-            return jsonify({"error": "Item not found."}), 404
+            return error_response("Item not found.", "item_not_found", 404)
         return jsonify(item.to_dict())
 
     @app.post("/items")
@@ -137,21 +144,29 @@ def create_app(db_path="inventory.db"):
         required_fields = ["category", "name", "quantity"]
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
-            return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+            return error_response(
+                f"Missing required fields: {', '.join(missing_fields)}",
+                "missing_required_fields",
+                400,
+            )
         if not str(data["name"]).strip():
-            return jsonify({"error": "Item name cannot be empty."}), 400
+            return error_response("Item name cannot be empty.", "invalid_name", 400)
 
         try:
             quantity = int(data["quantity"])
             if quantity < 0:
-                return jsonify({"error": "Quantity must be 0 or greater."}), 400
+                return error_response("Quantity must be 0 or greater.", "invalid_quantity", 400)
 
             category = str(data["category"]).strip().lower()
             expiration_date = data.get("expiration_date")
             if category == "perishable" and not expiration_date:
-                return jsonify({"error": "Perishable items require expiration_date."}), 400
+                return error_response(
+                    "Perishable items require expiration_date.",
+                    "missing_expiration_date",
+                    400,
+                )
             if expiration_date and not is_valid_date(expiration_date):
-                return jsonify({"error": "expiration_date must be YYYY-MM-DD."}), 400
+                return error_response("expiration_date must be YYYY-MM-DD.", "invalid_expiration_date", 400)
 
             item = service.add_item(
                 category,
@@ -163,7 +178,7 @@ def create_app(db_path="inventory.db"):
             )
         except Exception as exc:
             logger.exception("API failed to add item '%s'", data.get("name"))
-            return jsonify({"error": str(exc)}), 400
+            return error_response(str(exc), "add_item_failed", 400)
 
         return jsonify(item.to_dict()), 201
 
@@ -171,22 +186,22 @@ def create_app(db_path="inventory.db"):
     def check_out_item(name):
         data = request.get_json(silent=True) or {}
         if "user" not in data or "due_date" not in data:
-            return jsonify({"error": "Both 'user' and 'due_date' are required."}), 400
+            return error_response("Both 'user' and 'due_date' are required.", "missing_checkout_fields", 400)
         if not str(data["user"]).strip():
-            return jsonify({"error": "User cannot be empty."}), 400
+            return error_response("User cannot be empty.", "invalid_user", 400)
         if not is_valid_date(data["due_date"]):
-            return jsonify({"error": "due_date must be YYYY-MM-DD."}), 400
+            return error_response("due_date must be YYYY-MM-DD.", "invalid_due_date", 400)
 
         try:
             item = service.check_out_item(name, data["user"], data["due_date"])
         except ValueError as exc:
             logger.exception("API failed to check out item '%s'", name)
             if "not found" in str(exc).lower():
-                return jsonify({"error": str(exc)}), 404
-            return jsonify({"error": str(exc)}), 400
+                return error_response(str(exc), "item_not_found", 404)
+            return error_response(str(exc), "checkout_failed", 400)
         except Exception as exc:
             logger.exception("API failed to check out item '%s'", name)
-            return jsonify({"error": str(exc)}), 400
+            return error_response(str(exc), "checkout_failed", 400)
 
         return jsonify(item.to_dict())
 
@@ -197,8 +212,8 @@ def create_app(db_path="inventory.db"):
         except ValueError as exc:
             logger.exception("API failed to check in item '%s'", name)
             if "not found" in str(exc).lower():
-                return jsonify({"error": str(exc)}), 404
-            return jsonify({"error": str(exc)}), 400
+                return error_response(str(exc), "item_not_found", 404)
+            return error_response(str(exc), "checkin_failed", 400)
 
         return jsonify(item.to_dict())
 
@@ -209,31 +224,31 @@ def create_app(db_path="inventory.db"):
         invalid_fields = [field for field in data if field not in allowed_fields]
 
         if not data:
-            return jsonify({"error": "No update fields provided."}), 400
+            return error_response("No update fields provided.", "missing_update_fields", 400)
         if invalid_fields:
-            return jsonify({"error": f"Invalid fields: {', '.join(invalid_fields)}"}), 400
+            return error_response(f"Invalid fields: {', '.join(invalid_fields)}", "invalid_update_fields", 400)
 
         item = repo.get_by_name(name)
         if not item:
-            return jsonify({"error": "Item not found."}), 404
+            return error_response("Item not found.", "item_not_found", 404)
 
         if "quantity" in data:
             try:
                 quantity = int(data["quantity"])
             except (TypeError, ValueError):
-                return jsonify({"error": "quantity must be an integer."}), 400
+                return error_response("quantity must be an integer.", "invalid_quantity_type", 400)
             if quantity < 0:
-                return jsonify({"error": "quantity must be 0 or greater."}), 400
+                return error_response("quantity must be 0 or greater.", "invalid_quantity", 400)
             item.quantity = quantity
 
         if "department" in data:
             if not str(data["department"]).strip():
-                return jsonify({"error": "department cannot be empty."}), 400
+                return error_response("department cannot be empty.", "invalid_department", 400)
             item.department = data["department"]
 
         if "location" in data:
             if not str(data["location"]).strip():
-                return jsonify({"error": "location cannot be empty."}), 400
+                return error_response("location cannot be empty.", "invalid_location", 400)
             item.location = data["location"]
 
         repo.update(item)
@@ -246,7 +261,7 @@ def create_app(db_path="inventory.db"):
         status = data.get("status")
 
         if status not in {"lost", "in_repair"}:
-            return jsonify({"error": "Status must be 'lost' or 'in_repair'."}), 400
+            return error_response("Status must be 'lost' or 'in_repair'.", "invalid_status_value", 400)
 
         try:
             if status == "lost":
@@ -255,7 +270,7 @@ def create_app(db_path="inventory.db"):
                 item = service.mark_in_repair(name)
         except ValueError as exc:
             logger.exception("API failed to update status for item '%s'", name)
-            return jsonify({"error": str(exc)}), 404
+            return error_response(str(exc), "item_not_found", 404)
 
         return jsonify(item.to_dict())
 
@@ -263,7 +278,7 @@ def create_app(db_path="inventory.db"):
     def delete_item(name):
         item = repo.get_by_name(name)
         if not item:
-            return jsonify({"error": "Item not found."}), 404
+            return error_response("Item not found.", "item_not_found", 404)
 
         repo.delete(name)
         logger.info("Deleted item '%s'", name)

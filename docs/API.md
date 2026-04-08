@@ -10,7 +10,8 @@ Error responses return:
 
 ```json
 {
-  "error": "Human-readable message"
+  "error": "Human-readable message",
+  "code": "machine_readable_code"
 }
 ```
 
