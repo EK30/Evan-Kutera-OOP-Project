@@ -40,6 +40,9 @@ class Item:
 
     def check_out(self, user: str, due_date: str):
         # Checking out an item updates both its status and borrower details.
+        if self.status == "checked_out":
+            raise ValueError("Item is already checked out.")
+
         if self.quantity <= 0:
             raise ValueError("Item is out of stock.")
 

@@ -185,7 +185,9 @@ def create_app(db_path="inventory.db"):
             item = service.check_out_item(name, data["user"], data["due_date"])
         except ValueError as exc:
             logger.exception("API failed to check out item '%s'", name)
-            return jsonify({"error": str(exc)}), 404
+            if "not found" in str(exc).lower():
+                return jsonify({"error": str(exc)}), 404
+            return jsonify({"error": str(exc)}), 400
         except Exception as exc:
             logger.exception("API failed to check out item '%s'", name)
             return jsonify({"error": str(exc)}), 400
