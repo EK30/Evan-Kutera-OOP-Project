@@ -409,6 +409,49 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertIn("code", payload)
         self.assertEqual(payload["code"], "item_not_found")
 
+    def test_checkout_fails_when_item_marked_in_repair(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "RepairBlockedItem", "quantity": 2},
+        )
+        self.client.patch("/items/RepairBlockedItem/status", json={"status": "in_repair"})
+
+        response = self.client.post(
+            "/items/RepairBlockedItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-10"},
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not available", payload["error"].lower())
+        self.assertEqual(payload["code"], "checkout_failed")
+
+    def test_checkout_fails_when_item_marked_lost(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "LostBlockedItem", "quantity": 2},
+        )
+        self.client.patch("/items/LostBlockedItem/status", json={"status": "lost"})
+
+        response = self.client.post(
+            "/items/LostBlockedItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-10"},
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not available", payload["error"].lower())
+        self.assertEqual(payload["code"], "checkout_failed")
+
+    def test_checkin_nonexistent_item_has_consistent_error_contract(self):
+        response = self.client.post("/items/NoSuchItem/checkin")
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("error", payload)
+        self.assertIn("code", payload)
+        self.assertEqual(payload["code"], "item_not_found")
+
 
 if __name__ == "__main__":
     unittest.main()
