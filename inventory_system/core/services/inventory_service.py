@@ -63,6 +63,14 @@ class InventoryService:
             self.logger.warning("Check-in failed because item '%s' was not found", name)
             raise ValueError("Item not found.")
 
+        if item.status in {"lost", "in_repair"}:
+            self.logger.warning(
+                "Check-in blocked because item '%s' has status '%s'",
+                name,
+                item.status,
+            )
+            raise ValueError("Item is not currently checked out.")
+
         returned = self.repo.return_oldest_checkout(name)
         if not returned:
             self.logger.warning("Check-in failed because item '%s' had no active checkouts", name)

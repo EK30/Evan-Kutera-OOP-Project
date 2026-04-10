@@ -186,6 +186,9 @@ class SQLiteRepository(Repository):
     # DELETE -----------------------------------------------------------------
     def delete(self, name: str):
         self._ensure_connection()
+        # Remove checkout history first so re-adding an item with the same
+        # name does not inherit stale active checkouts.
+        self.conn.execute("DELETE FROM checkouts WHERE item_name = ?", (name,))
         self.conn.execute("DELETE FROM items WHERE name = ?", (name,))
         self.conn.commit()
 

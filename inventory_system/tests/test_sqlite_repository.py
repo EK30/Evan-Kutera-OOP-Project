@@ -85,6 +85,18 @@ class TestSQLiteRepository(unittest.TestCase):
         available_item = self.repo.get_by_name("Camera")
         self.assertEqual(available_item.status, "available")
 
+    def test_delete_cleans_checkout_history_for_reused_name(self):
+        item = Item("ReusedName", 1, "general")
+        self.repo.insert(item)
+        self.repo.insert_checkout("ReusedName", "Evan", "2026-06-01")
+
+        self.repo.delete("ReusedName")
+        self.assertEqual(self.repo.count_active_checkouts("ReusedName"), 0)
+
+        self.repo.insert(Item("ReusedName", 1, "general"))
+        recreated = self.repo.get_by_name("ReusedName")
+        self.assertEqual(recreated.status, "available")
+
 
 if __name__ == "__main__":
     unittest.main()
