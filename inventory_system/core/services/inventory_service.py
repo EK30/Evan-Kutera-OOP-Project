@@ -40,6 +40,16 @@ class InventoryService:
 
     # CHECK OUT
     def check_out_item(self, name, user, due_date):
+        if hasattr(self.repo, "checkout_item_atomic"):
+            item = self.repo.checkout_item_atomic(name, user, due_date)
+            self.logger.info(
+                "Checked out item '%s' to %s with due date %s",
+                item.name,
+                user,
+                item.due_date,
+            )
+            return item
+
         item = self.repo.get_by_name(name)
         if not item:
             self.logger.warning("Checkout failed because item '%s' was not found", name)

@@ -202,6 +202,56 @@ class SQLiteRepository(Repository):
             self.conn = None
 
     # CHECKOUTS --------------------------------------------------------------
+    def checkout_item_atomic(self, item_name: str, borrower: str, due_date: str):
+        self._ensure_connection()
+        try:
+            # Lock writes so checkout validation and stock decrement happen as one unit.
+            self.conn.execute("BEGIN IMMEDIATE")
+            row = self.conn.execute(
+                "SELECT quantity, status FROM items WHERE name = ?",
+                (item_name,),
+            ).fetchone()
+
+            if not row:
+                self.conn.rollback()
+                raise ValueError("Item not found.")
+
+            if row["status"] in {"lost", "in_repair"}:
+                self.conn.rollback()
+                raise ValueError("Item is not available for checkout.")
+
+            if row["quantity"] <= 0:
+                self.conn.rollback()
+                raise ValueError("Item is out of stock.")
+
+            self.conn.execute(
+                """
+                UPDATE items
+                SET quantity = quantity - 1,
+                    status = 'checked_out',
+                    checked_out_by = ?,
+                    due_date = ?
+                WHERE name = ?
+                """,
+                (borrower, due_date, item_name),
+            )
+            self.conn.execute(
+                """
+                INSERT INTO checkouts (item_name, borrower, due_date, returned_at)
+                VALUES (?, ?, ?, NULL)
+                """,
+                (item_name, borrower, due_date),
+            )
+            self.conn.commit()
+        except:
+            try:
+                self.conn.rollback()
+            except sqlite3.Error:
+                pass
+            raise
+
+        return self.get_by_name(item_name)
+
     def insert_checkout(self, item_name: str, borrower: str, due_date: str):
         self._ensure_connection()
         self.conn.execute(

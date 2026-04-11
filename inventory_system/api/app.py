@@ -239,6 +239,13 @@ def create_app(db_path="inventory.db"):
                 return error_response("quantity must be an integer.", "invalid_quantity_type", 400)
             if quantity < 0:
                 return error_response("quantity must be 0 or greater.", "invalid_quantity", 400)
+            active_checkouts = repo.count_active_checkouts(name)
+            if active_checkouts > 0 and quantity < active_checkouts:
+                return error_response(
+                    "quantity cannot be lower than the active checkout count.",
+                    "invalid_quantity_for_active_checkouts",
+                    400,
+                )
             item.quantity = quantity
 
         if "department" in data:

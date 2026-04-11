@@ -121,6 +121,26 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("0 or greater", response.get_json()["error"])
 
+    def test_patch_item_rejects_quantity_lower_than_active_checkout_count(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "PatchGuardItem", "quantity": 3},
+        )
+        self.client.post(
+            "/items/PatchGuardItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-01"},
+        )
+        self.client.post(
+            "/items/PatchGuardItem/checkout",
+            json={"user": "Alex", "due_date": "2026-05-02"},
+        )
+
+        response = self.client.patch("/items/PatchGuardItem", json={"quantity": 1})
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(payload["code"], "invalid_quantity_for_active_checkouts")
+
     def test_delete_item_removes_record(self):
         self.client.post(
             "/items",

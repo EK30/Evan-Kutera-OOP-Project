@@ -85,6 +85,15 @@ class TestSQLiteRepository(unittest.TestCase):
         available_item = self.repo.get_by_name("Camera")
         self.assertEqual(available_item.status, "available")
 
+    def test_checkout_item_atomic_decrements_quantity_and_creates_checkout(self):
+        self.repo.insert(Item("AtomicCamera", 2, "general"))
+
+        updated = self.repo.checkout_item_atomic("AtomicCamera", "Evan", "2026-06-05")
+
+        self.assertEqual(updated.quantity, 1)
+        self.assertEqual(updated.status, "checked_out")
+        self.assertEqual(self.repo.count_active_checkouts("AtomicCamera"), 1)
+
     def test_delete_cleans_checkout_history_for_reused_name(self):
         item = Item("ReusedName", 1, "general")
         self.repo.insert(item)
