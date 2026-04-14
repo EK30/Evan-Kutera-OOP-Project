@@ -196,6 +196,28 @@ class TestInventoryService(unittest.TestCase):
         self.assertEqual(repo.count_active_checkouts("LostCamera"), 1)
         self.assertEqual(repo.get_by_name("LostCamera").status, "lost")
 
+    def test_mark_in_repair_blocks_items_with_active_checkouts(self):
+        item = Item("RepairCamera", 0, "general", status="checked_out")
+        repo = FakeRepository([item])
+        repo.insert_checkout("RepairCamera", "Evan", "2026-04-10")
+        service = InventoryService(repo)
+
+        with self.assertRaises(ValueError):
+            service.mark_in_repair("RepairCamera")
+
+        self.assertEqual(repo.get_by_name("RepairCamera").status, "checked_out")
+
+    def test_mark_lost_blocks_items_with_active_checkouts(self):
+        item = Item("LostActiveCamera", 0, "general", status="checked_out")
+        repo = FakeRepository([item])
+        repo.insert_checkout("LostActiveCamera", "Evan", "2026-04-10")
+        service = InventoryService(repo)
+
+        with self.assertRaises(ValueError):
+            service.mark_lost("LostActiveCamera")
+
+        self.assertEqual(repo.get_by_name("LostActiveCamera").status, "checked_out")
+
 
 if __name__ == "__main__":
     unittest.main()

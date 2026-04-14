@@ -239,13 +239,6 @@ def create_app(db_path="inventory.db"):
                 return error_response("quantity must be an integer.", "invalid_quantity_type", 400)
             if quantity < 0:
                 return error_response("quantity must be 0 or greater.", "invalid_quantity", 400)
-            active_checkouts = repo.count_active_checkouts(name)
-            if active_checkouts > 0 and quantity < active_checkouts:
-                return error_response(
-                    "quantity cannot be lower than the active checkout count.",
-                    "invalid_quantity_for_active_checkouts",
-                    400,
-                )
             item.quantity = quantity
 
         if "department" in data:
@@ -277,7 +270,9 @@ def create_app(db_path="inventory.db"):
                 item = service.mark_in_repair(name)
         except ValueError as exc:
             logger.exception("API failed to update status for item '%s'", name)
-            return error_response(str(exc), "item_not_found", 404)
+            if "not found" in str(exc).lower():
+                return error_response(str(exc), "item_not_found", 404)
+            return error_response(str(exc), "status_update_failed", 400)
 
         return jsonify(item.to_dict())
 

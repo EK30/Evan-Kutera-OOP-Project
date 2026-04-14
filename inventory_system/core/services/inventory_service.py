@@ -101,6 +101,12 @@ class InventoryService:
         if not item:
             self.logger.warning("Mark in repair failed because item '%s' was not found", name)
             raise ValueError("Item not found.")
+        if hasattr(self.repo, "count_active_checkouts") and self.repo.count_active_checkouts(name) > 0:
+            self.logger.warning(
+                "Mark in repair blocked because item '%s' still has active checkouts",
+                name,
+            )
+            raise ValueError("Cannot mark item as in repair while it has active checkouts.")
         item.status = "in_repair"
         self.repo.update(item)
         self.logger.info("Marked item '%s' as in_repair", item.name)
@@ -112,6 +118,12 @@ class InventoryService:
         if not item:
             self.logger.warning("Mark lost failed because item '%s' was not found", name)
             raise ValueError("Item not found.")
+        if hasattr(self.repo, "count_active_checkouts") and self.repo.count_active_checkouts(name) > 0:
+            self.logger.warning(
+                "Mark lost blocked because item '%s' still has active checkouts",
+                name,
+            )
+            raise ValueError("Cannot mark item as lost while it has active checkouts.")
         item.status = "lost"
         self.repo.update(item)
         self.logger.info("Marked item '%s' as lost", item.name)

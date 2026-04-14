@@ -138,8 +138,8 @@ class TestFlaskAPI(unittest.TestCase):
         response = self.client.patch("/items/PatchGuardItem", json={"quantity": 1})
         payload = response.get_json()
 
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(payload["code"], "invalid_quantity_for_active_checkouts")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["quantity"], 1)
 
     def test_delete_item_removes_record(self):
         self.client.post(
@@ -462,6 +462,46 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("not available", payload["error"].lower())
         self.assertEqual(payload["code"], "checkout_failed")
+
+    def test_mark_in_repair_rejects_item_with_active_checkouts(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "RepairStatusGuardItem", "quantity": 2},
+        )
+        self.client.post(
+            "/items/RepairStatusGuardItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-10"},
+        )
+
+        response = self.client.patch(
+            "/items/RepairStatusGuardItem/status",
+            json={"status": "in_repair"},
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(payload["code"], "status_update_failed")
+        self.assertIn("active checkouts", payload["error"].lower())
+
+    def test_mark_lost_rejects_item_with_active_checkouts(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "LostStatusGuardItem", "quantity": 2},
+        )
+        self.client.post(
+            "/items/LostStatusGuardItem/checkout",
+            json={"user": "Evan", "due_date": "2026-05-10"},
+        )
+
+        response = self.client.patch(
+            "/items/LostStatusGuardItem/status",
+            json={"status": "lost"},
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(payload["code"], "status_update_failed")
+        self.assertIn("active checkouts", payload["error"].lower())
 
     def test_checkin_nonexistent_item_has_consistent_error_contract(self):
         response = self.client.post("/items/NoSuchItem/checkin")
