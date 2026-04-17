@@ -3,7 +3,7 @@ Alfred State Equipment Tracking System
 
 CISY 6503 - Object-Oriented Programming Semester Project
 
-This project is a Python-based inventory management system designed to help Alfred State College track equipment across departments, classrooms, labs, and student borrow/return operations. It uses object-oriented programming, design patterns, SQLite persistence, a command-line interface, logging, unit tests, and a Flask API.
+This project is a Python-based inventory management system built to help Alfred State College track equipment across departments, classrooms, labs, and student borrow/return operations. It was developed as a semester project using object-oriented programming, design patterns, SQLite persistence, a command-line interface, logging, automated tests, and a Flask API.
 
 Features
 --------
@@ -15,6 +15,7 @@ Equipment management
 
 Checkout system
 - Check out equipment to students or staff
+- Support multi-copy checkout until stock reaches zero
 - Assign due dates
 - Check equipment back in
 - View overdue items
@@ -32,7 +33,8 @@ Search and filtering
 
 Persistence
 - Save data using SQLite
-- Automatically create the database table if it does not exist
+- Automatically create the database tables if they do not exist
+- Track active and returned checkouts with a separate `checkouts` table
 
 Logging
 - Record key inventory actions in a log file
@@ -41,6 +43,17 @@ Logging
 Flask API
 - Expose inventory actions through REST-style endpoints
 - Support listing items, adding items, checking items out and in, and updating status
+- Return structured error responses with both `error` and `code`
+
+Project Highlights
+------------------
+
+- Layered architecture: CLI/API -> Service -> Repository -> Models
+- Two design patterns: Factory and Strategy
+- SQLite database with separate `items` and `checkouts` tables
+- Multi-copy checkout support with due-date tracking
+- Unit tests plus integration-style API tests
+- Deployment-ready dependency setup with `gunicorn`
 
 Project Structure
 -----------------
@@ -101,43 +114,56 @@ The `items` table includes:
 - `due_date`
 - `expiration_date`
 
+The `checkouts` table includes:
+- `id`
+- `item_name`
+- `borrower`
+- `due_date`
+- `returned_at`
+
 Running the Project
 -------------------
 
 1. Install dependencies
 
 ```powershell
-pip install -r requirements.txt
+py -m pip install -r requirements.txt
 ```
 
 2. Run the CLI
 
 ```powershell
-python -m inventory_system.ui.cli
+py -m inventory_system.ui.cli
 ```
 
 3. Run the Flask API
 
 ```powershell
-python -m inventory_system.api.app
+py -m inventory_system.api.app
 ```
 
-4. Run the unit tests
+4. Run the full test suite
 
 ```powershell
-python -m unittest discover inventory_system/tests
+py -m unittest discover inventory_system/tests
+```
+
+5. Run the app with Gunicorn for deployment testing
+
+```powershell
+gunicorn "inventory_system.api.app:create_app()" --bind 127.0.0.1:8000
 ```
 
 Latest Verification
 -------------------
 
-Last successful verification date: 2026-03-27
+Last successful verification date: 2026-04-17
 
-Commands used:
+Verification commands:
 
 ```powershell
-python -m unittest inventory_system.tests.test_api
-python -m unittest discover inventory_system/tests
+py -m unittest inventory_system.tests.test_api
+py -m unittest discover inventory_system/tests
 ```
 
 Result:
@@ -189,11 +215,27 @@ Flask API Endpoints
 - `PATCH /items/<name>/status`
 - `DELETE /items/<name>`
 
+API response notes
+------------------
+
+- Successful requests return JSON resource data.
+- Error responses use this format:
+
+```json
+{
+  "error": "Human-readable message",
+  "code": "machine_readable_code"
+}
+```
+
 Demo and API Collection
 -----------------------
 
 - 5-minute demo checklist: `docs/DEMO_CHECKLIST.md`
 - Postman collection: `docs/postman/Inventory_API.postman_collection.json`
+- Architecture overview: `docs/ARCHITECTURE.md`
+- API documentation: `docs/API.md`
+- Project check-in summary: `CHECKIN_SUMMARY.md`
 
 Example JSON
 ------------
@@ -235,7 +277,10 @@ The project includes unit tests for:
 - `PerishableItem`
 - `InventoryService`
 - `SQLiteRepository`
-- Basic Flask API routes
+- Flask API routes
+- Multi-checkout and multi-checkin flows
+- Error-contract consistency
+- Edge cases around lost/in-repair status handling
 
 Log File
 --------
@@ -247,17 +292,22 @@ Application events are written to:
 Project Status
 --------------
 
-The project currently includes:
+The completed project currently includes:
 - Core inventory models
 - SQLite persistence
 - CLI interface
 - Logging
 - Unit tests
 - Flask API
+- Deployment-ready dependency setup with `gunicorn`
 
-Possible next improvements:
-- Stronger CLI input validation
-- More update and delete features
-- Web dashboard
-- Barcode scanning
-- Reservation system
+Deployment Notes
+----------------
+
+For Linux server deployment, the project is designed to run behind `gunicorn` and `nginx`.
+
+Typical production start command:
+
+```bash
+gunicorn "inventory_system.api.app:create_app()" --bind 127.0.0.1:8000
+```
