@@ -17,9 +17,6 @@ class TestFlaskAPI(unittest.TestCase):
         self.client = self.app.test_client()
 
     def tearDown(self):
-        repo = self.app.config.get("INVENTORY_REPO")
-        if repo is not None:
-            repo.close()
         self.temp_dir.cleanup()
 
     def test_health_check(self):

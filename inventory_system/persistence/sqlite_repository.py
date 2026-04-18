@@ -14,6 +14,7 @@ class SQLiteRepository(Repository):
         # row_factory lets us access columns by name instead of index.
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS checkouts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

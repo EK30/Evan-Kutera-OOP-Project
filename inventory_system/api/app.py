@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, g
 from datetime import datetime
 
 from inventory_system.core.services.inventory_service import InventoryService
@@ -13,9 +13,23 @@ def create_app(db_path="inventory.db"):
 
     # Make sure the database exists before the API starts serving requests.
     initialize_database(db_path)
-    repo = SQLiteRepository(db_path)
-    service = InventoryService(repo)
-    app.config["INVENTORY_REPO"] = repo
+    app.config["DB_PATH"] = db_path
+
+    def get_repo():
+        if "inventory_repo" not in g:
+            g.inventory_repo = SQLiteRepository(app.config["DB_PATH"])
+        return g.inventory_repo
+
+    def get_service():
+        if "inventory_service" not in g:
+            g.inventory_service = InventoryService(get_repo())
+        return g.inventory_service
+
+    @app.teardown_appcontext
+    def close_repo(_exc):
+        repo = g.pop("inventory_repo", None)
+        if repo is not None:
+            repo.close()
 
     def serialize_items(items):
         return [item.to_dict() for item in items]
@@ -56,6 +70,7 @@ def create_app(db_path="inventory.db"):
 
     @app.get("/stats")
     def get_stats():
+        service = get_service()
         items = service.list_items()
         counts = {
             "available": 0,
@@ -83,6 +98,7 @@ def create_app(db_path="inventory.db"):
 
     @app.get("/items")
     def get_items():
+        service = get_service()
         department = request.args.get("department")
         location = request.args.get("location")
         search = request.args.get("search")
@@ -132,6 +148,7 @@ def create_app(db_path="inventory.db"):
 
     @app.get("/items/<path:name>")
     def get_item(name):
+        repo = get_repo()
         item = repo.get_by_name(name)
         if not item:
             return error_response("Item not found.", "item_not_found", 404)
@@ -139,6 +156,7 @@ def create_app(db_path="inventory.db"):
 
     @app.post("/items")
     def add_item():
+        service = get_service()
         data = request.get_json(silent=True) or {}
 
         required_fields = ["category", "name", "quantity"]
@@ -184,6 +202,7 @@ def create_app(db_path="inventory.db"):
 
     @app.post("/items/<path:name>/checkout")
     def check_out_item(name):
+        service = get_service()
         data = request.get_json(silent=True) or {}
         if "user" not in data or "due_date" not in data:
             return error_response("Both 'user' and 'due_date' are required.", "missing_checkout_fields", 400)
@@ -207,6 +226,7 @@ def create_app(db_path="inventory.db"):
 
     @app.post("/items/<path:name>/checkin")
     def check_in_item(name):
+        service = get_service()
         try:
             item = service.check_in_item(name)
         except ValueError as exc:
@@ -219,6 +239,7 @@ def create_app(db_path="inventory.db"):
 
     @app.patch("/items/<path:name>")
     def update_item(name):
+        repo = get_repo()
         data = request.get_json(silent=True) or {}
         allowed_fields = {"quantity", "department", "location"}
         invalid_fields = [field for field in data if field not in allowed_fields]
@@ -257,6 +278,7 @@ def create_app(db_path="inventory.db"):
 
     @app.patch("/items/<path:name>/status")
     def update_item_status(name):
+        service = get_service()
         data = request.get_json(silent=True) or {}
         status = data.get("status")
 
@@ -278,6 +300,7 @@ def create_app(db_path="inventory.db"):
 
     @app.delete("/items/<path:name>")
     def delete_item(name):
+        repo = get_repo()
         item = repo.get_by_name(name)
         if not item:
             return error_response("Item not found.", "item_not_found", 404)

@@ -3,6 +3,7 @@ import sqlite3
 
 def initialize_database(db_path="inventory.db"):
     conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA foreign_keys = ON")
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS items (
