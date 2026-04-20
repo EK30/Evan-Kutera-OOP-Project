@@ -12,6 +12,8 @@ class ItemFactory:
     def create_item(category: str, name: str, quantity: int, **extra):
         # Normalize input so the UI can pass categories in a flexible way.
         category = category.lower().strip()
+        if category not in {"general", "perishable"}:
+            raise ValueError("Category must be 'general' or 'perishable'.")
 
         # Perishable item
         if category == "perishable":

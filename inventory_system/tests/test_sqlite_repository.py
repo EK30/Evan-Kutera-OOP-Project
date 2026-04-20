@@ -106,6 +106,25 @@ class TestSQLiteRepository(unittest.TestCase):
         recreated = self.repo.get_by_name("ReusedName")
         self.assertEqual(recreated.status, "available")
 
+    def test_insert_rejects_duplicate_item_name_with_clear_message(self):
+        self.repo.insert(Item("DuplicateCamera", 1, "general"))
+
+        with self.assertRaises(ValueError) as context:
+            self.repo.insert(Item("DuplicateCamera", 2, "general"))
+
+        self.assertIn("already exists", str(context.exception))
+
+    def test_get_by_name_uses_earliest_active_due_date_summary(self):
+        self.repo.insert(Item("DueDateCamera", 2, "general"))
+        self.repo.insert_checkout("DueDateCamera", "Evan", "2026-06-10")
+        self.repo.insert_checkout("DueDateCamera", "Alex", "2026-06-01")
+
+        saved_item = self.repo.get_by_name("DueDateCamera")
+
+        self.assertEqual(saved_item.status, "checked_out")
+        self.assertEqual(saved_item.checked_out_by, "Alex")
+        self.assertEqual(str(saved_item.due_date), "2026-06-01")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -91,6 +91,13 @@ class TestInventoryService(unittest.TestCase):
         self.assertIsInstance(item, PerishableItem)
         self.assertEqual(repo.get_all()[0].category, "perishable")
 
+    def test_add_item_rejects_invalid_category(self):
+        repo = FakeRepository()
+        service = InventoryService(repo)
+
+        with self.assertRaises(ValueError):
+            service.add_item("electronics", "Laptop", 1)
+
     def test_search_items_matches_name_case_insensitively(self):
         repo = FakeRepository(
             [

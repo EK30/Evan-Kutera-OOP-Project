@@ -176,6 +176,12 @@ def create_app(db_path="inventory.db"):
                 return error_response("Quantity must be 0 or greater.", "invalid_quantity", 400)
 
             category = str(data["category"]).strip().lower()
+            if category not in {"general", "perishable"}:
+                return error_response(
+                    "Category must be 'general' or 'perishable'.",
+                    "invalid_category",
+                    400,
+                )
             expiration_date = data.get("expiration_date")
             if category == "perishable" and not expiration_date:
                 return error_response(

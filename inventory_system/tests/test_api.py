@@ -51,6 +51,45 @@ class TestFlaskAPI(unittest.TestCase):
         self.assertEqual(saved_item.status_code, 200)
         self.assertEqual(saved_item.get_json()["name"], "Laptop")
 
+    def test_add_duplicate_item_returns_clear_error(self):
+        self.client.post(
+            "/items",
+            json={
+                "category": "general",
+                "name": "Laptop",
+                "quantity": 3,
+            },
+        )
+
+        response = self.client.post(
+            "/items",
+            json={
+                "category": "general",
+                "name": "Laptop",
+                "quantity": 1,
+            },
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("already exists", payload["error"])
+        self.assertEqual(payload["code"], "add_item_failed")
+
+    def test_add_item_rejects_invalid_category(self):
+        response = self.client.post(
+            "/items",
+            json={
+                "category": "electronics",
+                "name": "Laptop",
+                "quantity": 1,
+            },
+        )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(payload["code"], "invalid_category")
+        self.assertIn("general", payload["error"])
+
     def test_checkout_item(self):
         self.client.post(
             "/items",
@@ -216,6 +255,29 @@ class TestFlaskAPI(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("overdue must be", response.get_json()["error"])
+
+    def test_get_items_overdue_uses_earliest_active_due_date(self):
+        self.client.post(
+            "/items",
+            json={"category": "general", "name": "OverdueSharedItem", "quantity": 2},
+        )
+        self.client.post(
+            "/items/OverdueSharedItem/checkout",
+            json={"user": "Evan", "due_date": "2026-12-31"},
+        )
+        self.client.post(
+            "/items/OverdueSharedItem/checkout",
+            json={"user": "Alex", "due_date": "2020-01-01"},
+        )
+
+        response = self.client.get("/items?overdue=true")
+        payload = response.get_json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(payload), 1)
+        self.assertEqual(payload[0]["name"], "OverdueSharedItem")
+        self.assertEqual(payload[0]["checked_out_by"], "Alex")
+        self.assertEqual(payload[0]["due_date"], "2020-01-01")
 
     def test_checkout_nonexistent_item_returns_404(self):
         response = self.client.post(

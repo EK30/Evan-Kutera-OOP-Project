@@ -47,19 +47,21 @@ class SQLiteRepository(Repository):
             (name, quantity, category, department, location, status, checked_out_by, due_date, expiration_date)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-
-        self.conn.execute(query, (
-            item.name,
-            item.quantity,
-            item.category,
-            item.department,
-            item.location,
-            item.status,
-            item.checked_out_by,
-            str(item.due_date) if item.due_date else None,
-            str(item.expiration_date) if hasattr(item, "expiration_date") else None
-        ))
-        self.conn.commit()
+        try:
+            self.conn.execute(query, (
+                item.name,
+                item.quantity,
+                item.category,
+                item.department,
+                item.location,
+                item.status,
+                item.checked_out_by,
+                str(item.due_date) if item.due_date else None,
+                str(item.expiration_date) if hasattr(item, "expiration_date") else None
+            ))
+            self.conn.commit()
+        except sqlite3.IntegrityError as exc:
+            raise ValueError(f"Item '{item.name}' already exists.") from exc
 
 
     # GET ALL ----------------------------------------------------------------
@@ -314,7 +316,7 @@ class SQLiteRepository(Repository):
             SELECT borrower, due_date
             FROM checkouts
             WHERE item_name = ? AND returned_at IS NULL
-            ORDER BY id ASC
+            ORDER BY due_date ASC, id ASC
             LIMIT 1
             """,
             (item_name,),
