@@ -86,7 +86,7 @@ def create_app(db_path="inventory.db"):
         return jsonify(
             {
                 "total_items": len(items),
-                "total_quantity": sum(item.quantity for item in items),
+                "available_quantity": sum(item.quantity for item in items),
                 "available": counts["available"],
                 "checked_out": counts["checked_out"],
                 "in_repair": counts["in_repair"],
